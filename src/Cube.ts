@@ -12,10 +12,9 @@ export class Cube {
   moveQueue: string[] = [];
   animating = false;
   progress = 0;
-  moveSpeed = 4;
   waitTimer = Math.random() * 5;
 
-  constructor(public worldPos: THREE.Vector3) {
+  constructor(public worldPos: THREE.Vector3, public moveSpeed: number = 4) {
     for (let x = -1; x <= 1; x++) {
       for (let y = -1; y <= 1; y++) {
         for (let z = -1; z <= 1; z++) {
@@ -101,8 +100,15 @@ export class Cube {
   scramble(n: number) {
     const moves = ['R', 'L', 'U', 'D', 'F', 'B'];
     const sequence: string[] = [];
+    let lastBase = '';
+    
     for (let i = 0; i < n; i++) {
-      const m = moves[Math.floor(Math.random() * moves.length)];
+      let m = '';
+      do {
+          m = moves[Math.floor(Math.random() * moves.length)];
+      } while (m === lastBase);
+      
+      lastBase = m;
       const prime = Math.random() > 0.5 ? "'" : "";
       sequence.push(m + prime);
     }

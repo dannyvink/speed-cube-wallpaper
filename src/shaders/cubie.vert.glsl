@@ -12,6 +12,7 @@ varying vec3 vColor;
 varying vec3 vNormal;
 varying vec3 vViewPosition;
 varying vec3 vLocalFragPos;
+varying float vFaceIdx;
 
 vec3 rotate_vector(vec4 q, vec3 v) {
   return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
@@ -32,29 +33,25 @@ vec4 slerp(vec4 v0, vec4 v1, float t) {
 
 void main() {
   int faceIdx = int(aFaceId);
+  vFaceIdx = aFaceId;
   int typeMask = int(aCubieType);
   bool hasSticker = ((typeMask >> faceIdx) & 1) == 1;
 
   if (hasSticker) {
     vColor = palette[faceIdx];
   } else {
-    vColor = vec3(0.02); // Deep black for internal plastic
+    vColor = vec3(0.05); // Plastic body
   }
 
   vec4 q = slerp(aQuatA, aQuatB, aProgress);
 
-  // Rotate Normal
   vNormal = normalize(rotate_vector(q, normal));
 
-  // Rotate and Position Vertex
-  // Cubie size is 10.0, we use a slightly smaller inner box for the "sticker" feel
-  // and larger for the plastic body. 
-  // Let's keep it simple: the whole box rotates.
   vec3 localOffset = aLocalPos * 10.0;
   vec3 pos = rotate_vector(q, position + localOffset);
   pos += aInstancePos;
 
-  vLocalFragPos = position; // Unrotated local position for edge detection
+  vLocalFragPos = position; 
 
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
   vViewPosition = -mvPosition.xyz;

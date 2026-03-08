@@ -6,6 +6,7 @@ import './style.css';
 
 const WIDTH = 30; // 30x20 is safer for performance while debugging
 const HEIGHT = 20;
+const MOVE_SPEED = 4.0;
 const CUBE_COUNT = WIDTH * HEIGHT;
 const CUBIES_PER_CUBE = 26;
 const TOTAL_INSTANCES = CUBE_COUNT * CUBIES_PER_CUBE;
@@ -19,6 +20,7 @@ camera.position.set(200, 200, 200);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x111111);
 document.body.appendChild(renderer.domElement);
@@ -80,7 +82,7 @@ for (let i = 0; i < WIDTH; i++) {
     const w = -(u + v);
 
     const worldPos = new THREE.Vector3(u, v, w).multiplyScalar(spacing);
-    const cube = new Cube(worldPos);
+    const cube = new Cube(worldPos, MOVE_SPEED);
     cubes.push(cube);
   }
 }
