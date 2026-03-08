@@ -2,14 +2,10 @@ import * as THREE from 'three';
 import { Cube } from './Cube';
 import vert from './shaders/cubie.vert.glsl';
 import frag from './shaders/cubie.frag.glsl';
-import './style.css';
 
-const WIDTH = 30; // 30x20 is safer for performance while debugging
-const HEIGHT = 20;
 const MOVE_SPEED = 4.0;
-const CUBE_COUNT = WIDTH * HEIGHT;
+const spacing = 30.0;
 const CUBIES_PER_CUBE = 26;
-const TOTAL_INSTANCES = CUBE_COUNT * CUBIES_PER_CUBE;
 
 const scene = new THREE.Scene();
 const aspect = window.innerWidth / window.innerHeight;
@@ -34,23 +30,6 @@ for (let i = 0; i < 6; i++) {
 }
 baseGeom.setAttribute('aFaceId', new THREE.BufferAttribute(faceIds, 1));
 
-const instancedGeom = new THREE.InstancedBufferGeometry().copy(baseGeom);
-instancedGeom.instanceCount = TOTAL_INSTANCES;
-
-const aCubieType = new THREE.InstancedBufferAttribute(new Float32Array(TOTAL_INSTANCES), 1);
-const aInstancePos = new THREE.InstancedBufferAttribute(new Float32Array(TOTAL_INSTANCES * 3), 3);
-const aLocalPos = new THREE.InstancedBufferAttribute(new Float32Array(TOTAL_INSTANCES * 3), 3);
-const aQuatA = new THREE.InstancedBufferAttribute(new Float32Array(TOTAL_INSTANCES * 4), 4);
-const aQuatB = new THREE.InstancedBufferAttribute(new Float32Array(TOTAL_INSTANCES * 4), 4);
-const aProgress = new THREE.InstancedBufferAttribute(new Float32Array(TOTAL_INSTANCES), 1);
-
-instancedGeom.setAttribute('aCubieType', aCubieType);
-instancedGeom.setAttribute('aInstancePos', aInstancePos);
-instancedGeom.setAttribute('aLocalPos', aLocalPos);
-instancedGeom.setAttribute('aQuatA', aQuatA);
-instancedGeom.setAttribute('aQuatB', aQuatB);
-instancedGeom.setAttribute('aProgress', aProgress);
-
 const material = new THREE.ShaderMaterial({
   uniforms: {
     palette: {
@@ -68,44 +47,84 @@ const material = new THREE.ShaderMaterial({
   fragmentShader: frag,
 });
 
-const mesh = new THREE.Mesh(instancedGeom, material);
-mesh.frustumCulled = false;
-scene.add(mesh);
+let mesh: THREE.Mesh | null = null;
+let cubes: Cube[] = [];
+let instancedGeom: THREE.InstancedBufferGeometry;
 
-const cubes: Cube[] = [];
-const spacing = 30.0;
+let aCubieType: THREE.InstancedBufferAttribute;
+let aInstancePos: THREE.InstancedBufferAttribute;
+let aLocalPos: THREE.InstancedBufferAttribute;
+let aQuatA: THREE.InstancedBufferAttribute;
+let aQuatB: THREE.InstancedBufferAttribute;
+let aProgress: THREE.InstancedBufferAttribute;
 
-for (let i = 0; i < WIDTH; i++) {
-  for (let j = 0; j < HEIGHT; j++) {
-    const u = i - WIDTH / 2;
-    const v = j - HEIGHT / 2;
-    const w = -(u + v);
+function initGrid() {
+  if (mesh) {
+    scene.remove(mesh);
+    cubes = [];
+  }
 
-    const worldPos = new THREE.Vector3(u, v, w).multiplyScalar(spacing);
-    const cube = new Cube(worldPos, MOVE_SPEED);
-    cubes.push(cube);
+  // Calculate needed width and height to fill screen based on 'd' and 'aspect'
+  // In orthographic with d=150, the vertical view is -150 to 150 (300 units)
+  // Horizontal is 300 * aspect. 
+  // We add a buffer of 5 cubes on each side to ensure coverage during rotation
+  const viewHeight = d * 2;
+  const viewWidth = viewHeight * aspect;
+  
+  const widthCount = Math.ceil(viewWidth / (spacing * 0.8)) + 10;
+  const heightCount = Math.ceil(viewHeight / (spacing * 0.8)) + 10;
+  
+  const totalCubes = widthCount * heightCount;
+  const totalInstances = totalCubes * CUBIES_PER_CUBE;
+
+  instancedGeom = new THREE.InstancedBufferGeometry().copy(baseGeom);
+  instancedGeom.instanceCount = totalInstances;
+
+  aCubieType = new THREE.InstancedBufferAttribute(new Float32Array(totalInstances), 1);
+  aInstancePos = new THREE.InstancedBufferAttribute(new Float32Array(totalInstances * 3), 3);
+  aLocalPos = new THREE.InstancedBufferAttribute(new Float32Array(totalInstances * 3), 3);
+  aQuatA = new THREE.InstancedBufferAttribute(new Float32Array(totalInstances * 4), 4);
+  aQuatB = new THREE.InstancedBufferAttribute(new Float32Array(totalInstances * 4), 4);
+  aProgress = new THREE.InstancedBufferAttribute(new Float32Array(totalInstances), 1);
+
+  instancedGeom.setAttribute('aCubieType', aCubieType);
+  instancedGeom.setAttribute('aInstancePos', aInstancePos);
+  instancedGeom.setAttribute('aLocalPos', aLocalPos);
+  instancedGeom.setAttribute('aQuatA', aQuatA);
+  instancedGeom.setAttribute('aQuatB', aQuatB);
+  instancedGeom.setAttribute('aProgress', aProgress);
+
+  mesh = new THREE.Mesh(instancedGeom, material);
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+
+  for (let i = 0; i < widthCount; i++) {
+    for (let j = 0; j < heightCount; j++) {
+      const u = i - widthCount / 2;
+      const v = j - heightCount / 2;
+      const w = -(u + v);
+
+      const worldPos = new THREE.Vector3(u, v, w).multiplyScalar(spacing);
+      const cube = new Cube(worldPos, MOVE_SPEED);
+      cubes.push(cube);
+    }
+  }
+
+  let idx = 0;
+  for (const cube of cubes) {
+    for (const cubie of cube.cubies) {
+      aCubieType.setX(idx, cubie.typeMask);
+      aInstancePos.setXYZ(idx, cube.worldPos.x, cube.worldPos.y, cube.worldPos.z);
+      aLocalPos.setXYZ(idx, cubie.initialPos.x, cubie.initialPos.y, cubie.initialPos.z);
+      aQuatA.setXYZW(idx, 0, 0, 0, 1);
+      aQuatB.setXYZW(idx, 0, 0, 0, 1);
+      aProgress.setX(idx, 0);
+      idx++;
+    }
   }
 }
 
-// Initial upload
-let idx = 0;
-for (const cube of cubes) {
-  for (const cubie of cube.cubies) {
-    aCubieType.setX(idx, cubie.typeMask);
-    aInstancePos.setXYZ(idx, cube.worldPos.x, cube.worldPos.y, cube.worldPos.z);
-    aLocalPos.setXYZ(idx, cubie.initialPos.x, cubie.initialPos.y, cubie.initialPos.z);
-    aQuatA.setXYZW(idx, 0, 0, 0, 1);
-    aQuatB.setXYZW(idx, 0, 0, 0, 1);
-    aProgress.setX(idx, 0);
-    idx++;
-  }
-}
-aCubieType.needsUpdate = true;
-aInstancePos.needsUpdate = true;
-aLocalPos.needsUpdate = true;
-aQuatA.needsUpdate = true;
-aQuatB.needsUpdate = true;
-aProgress.needsUpdate = true;
+initGrid();
 
 const clock = new THREE.Clock();
 
@@ -142,13 +161,16 @@ function animate() {
 }
 
 window.addEventListener('resize', () => {
-  const aspect = window.innerWidth / window.innerHeight;
-  camera.left = -d * aspect;
-  camera.right = d * aspect;
+  const newAspect = window.innerWidth / window.innerHeight;
+  camera.left = -d * newAspect;
+  camera.right = d * newAspect;
   camera.top = d;
   camera.bottom = -d;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  
+  // Re-init grid if aspect ratio changed significantly to ensure coverage
+  initGrid();
 });
 
 animate();
