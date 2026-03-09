@@ -15,6 +15,9 @@ export class Cube {
   waitTimer = Math.random() * 5;
   worldPos: THREE.Vector3;
   moveSpeed: number;
+  animationMode = 0;
+  waveMoveFactor = 0;
+  numPermutations = 5;
 
   constructor(worldPos: THREE.Vector3, moveSpeed: number = 4) {
     this.worldPos = worldPos;
@@ -64,8 +67,20 @@ export class Cube {
     } else {
       this.waitTimer -= delta;
       if (this.waitTimer <= 0) {
-        this.scramble(10 + Math.floor(Math.random() * 10));
-        this.waitTimer = 2 + Math.random() * 5;
+        if (this.animationMode === 0) {
+          // Random: vary both move count and wait time
+          this.scramble(10 + Math.floor(Math.random() * 10));
+          this.waitTimer = 2 + Math.random() * 5;
+        } else if (this.animationMode === 3) {
+          // N Permutations: user-controlled move count, synchronized timing
+          this.scramble(this.numPermutations);
+          this.waitTimer = 3;
+        } else {
+          // Synchronized & Wave: fixed move count and wait.
+          // Wave cubes are pre-staggered via waitTimer set in initGrid().
+          this.scramble(10);
+          this.waitTimer = 3;
+        }
       }
     }
   }

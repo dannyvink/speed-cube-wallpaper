@@ -5,6 +5,8 @@ import frag from './shaders/cubie.frag.glsl';
 
 let MOVE_SPEED = 2.0;
 let CUBE_SPACING = 30.0;
+let ANIMATION_MODE = 0; // 0=Random, 1=Synchronized, 2=Wave (right), 3=N Permutations, 4=Wave (left), 5=Ripple
+let NUM_PERMUTATIONS = 5;
 const CUBIES_PER_CUBE = 26;
 
 const scene = new THREE.Scene();
@@ -115,6 +117,36 @@ function initGrid() {
     }
   }
 
+  // Screen-space X = worldPos.x - worldPos.z (right vector is (1,0,-1) in this isometric view)
+  const screenXValues = cubes.map(c => c.worldPos.x - c.worldPos.z);
+  const screenXMin = Math.min(...screenXValues);
+  const screenXRange = Math.max(...screenXValues) - screenXMin || 1;
+  const WAVE_STAGGER = 8;
+  for (const cube of cubes) {
+    cube.waveMoveFactor = (cube.worldPos.x - cube.worldPos.z - screenXMin) / screenXRange;
+    cube.animationMode = ANIMATION_MODE;
+    cube.numPermutations = NUM_PERMUTATIONS;
+    if (ANIMATION_MODE === 1 || ANIMATION_MODE === 3) {
+      cube.waitTimer = 0;
+    } else if (ANIMATION_MODE === 2) {
+      // Wave (to right): left starts first
+      cube.waitTimer = cube.waveMoveFactor * WAVE_STAGGER;
+    } else if (ANIMATION_MODE === 4) {
+      // Wave (to left): right starts first
+      cube.waitTimer = (1 - cube.waveMoveFactor) * WAVE_STAGGER;
+    }
+  }
+
+  if (ANIMATION_MODE === 5) {
+    // Ripple: outer cubes start first, center starts last
+    const distances = cubes.map(c => c.worldPos.length());
+    const maxDist = Math.max(...distances);
+    for (let i = 0; i < cubes.length; i++) {
+      const normalizedDist = maxDist > 0 ? distances[i] / maxDist : 0;
+      cubes[i].waitTimer = (1 - normalizedDist) * WAVE_STAGGER;
+    }
+  }
+
   let idx = 0;
   for (const cube of cubes) {
     for (const cubie of cube.cubies) {
@@ -131,11 +163,12 @@ function initGrid() {
 
 initGrid();
 
-const clock = new THREE.Clock();
+const timer = new THREE.Timer();
 
 function animate() {
   requestAnimationFrame(animate);
-  const delta = clock.getDelta();
+  timer.update();
+  const delta = timer.getDelta();
 
   let idx = 0;
   let updateNecessary = false;
@@ -194,8 +227,26 @@ function applyWallpaperColor(index: number, value: string) {
     if (properties.color_face_4) applyWallpaperColor(4, properties.color_face_4.value);
     if (properties.color_face_5) applyWallpaperColor(5, properties.color_face_5.value);
 
+    if (properties.animation_mode) {
+      const mode = properties.animation_mode.value as string;
+      ANIMATION_MODE = mode === 'synchronized' ? 1
+        : mode === 'wave_right' ? 2
+        : mode === 'n_permutations' ? 3
+        : mode === 'wave_left' ? 4
+        : mode === 'ripple' ? 5
+        : 0;
+      initGrid();
+    }
+
+    if (properties.num_permutations) {
+      NUM_PERMUTATIONS = properties.num_permutations.value;
+      for (const cube of cubes) {
+        cube.numPermutations = NUM_PERMUTATIONS;
+      }
+    }
+
     if (properties.cube_spacing) {
-      CUBE_SPACING = properties.cube_spacing.value;
+      CUBE_SPACING = 30 + properties.cube_spacing.value;
       initGrid();
     }
 
@@ -204,6 +255,15 @@ function applyWallpaperColor(index: number, value: string) {
       for (const cube of cubes) {
         cube.moveSpeed = MOVE_SPEED;
       }
+    }
+
+    if (properties.color_background) {
+      const parts = properties.color_background.value.split(' ');
+      renderer.setClearColor(new THREE.Color(
+        parseFloat(parts[0]),
+        parseFloat(parts[1]),
+        parseFloat(parts[2])
+      ));
     }
 
     if (properties.camera_depth) {
