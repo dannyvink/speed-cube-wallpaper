@@ -1,189 +1,197 @@
 {
-	"file" : "index.html",
-	"general" :
-	{
-		"properties" :
-		{
-			"camera_depth" :
-			{
-				"fraction" : false,
-				"index" : 8,
-				"max" : 300,
-				"min" : 1,
-				"order" : 108,
-				"text" : "Camera Depth",
-				"type" : "slider",
-				"value" : 150
+	"file": "index.html",
+	"general": {
+		"properties": {
+			"camera_depth": {
+				"fraction": false,
+				"index": 8,
+				"max": 300,
+				"min": 1,
+				"order": 108,
+				"text": "Camera Depth",
+				"type": "slider",
+				"value": 150
 			},
-			"color_background" :
-			{
-				"index" : 9,
-				"order" : 99,
-				"text" : "Background Color",
-				"type" : "color",
-				"value" : "0.06666666666666667 0.06666666666666667 0.06666666666666667"
+			"color_background": {
+				"index": 9,
+				"order": 99,
+				"text": "Background Color",
+				"type": "color",
+				"value": "0.06666666666666667 0.06666666666666667 0.06666666666666667"
 			},
-			"color_face_0" :
-			{
-				"index" : 0,
-				"order" : 100,
-				"text" : "Color 1",
-				"type" : "color",
-				"value" : "0.9882352941176471 0.9882352941176471 0.9882352941176471"
+			"color_face_0": {
+				"index": 0,
+				"order": 100,
+				"text": "Color 1",
+				"type": "color",
+				"value": "0.9882352941176471 0.9882352941176471 0.9882352941176471"
 			},
-			"color_face_1" :
-			{
-				"index" : 1,
-				"order" : 101,
-				"text" : "Color 2",
-				"type" : "color",
-				"value" : "0.9647058823529412 0.9254901960784314 0.12941176470588237"
+			"color_face_1": {
+				"index": 1,
+				"order": 101,
+				"text": "Color 2",
+				"type": "color",
+				"value": "0.9647058823529412 0.9254901960784314 0.12941176470588237"
 			},
-			"color_face_2" :
-			{
-				"index" : 2,
-				"order" : 102,
-				"text" : "Color 3",
-				"type" : "color",
-				"value" : "0 0.6196078431372549 0.3568627450980392"
+			"color_face_2": {
+				"index": 2,
+				"order": 102,
+				"text": "Color 3",
+				"type": "color",
+				"value": "0 0.6196078431372549 0.3568627450980392"
 			},
-			"color_face_3" :
-			{
-				"index" : 3,
-				"order" : 103,
-				"text" : "Color 4",
-				"type" : "color",
-				"value" : "0 0.3137254901960784 0.6431372549019608"
+			"color_face_3": {
+				"index": 3,
+				"order": 103,
+				"text": "Color 4",
+				"type": "color",
+				"value": "0 0.3137254901960784 0.6431372549019608"
 			},
-			"color_face_4" :
-			{
-				"index" : 4,
-				"order" : 104,
-				"text" : "Color 5",
-				"type" : "color",
-				"value" : "0.8431372549019608 0.1568627450980392 0.1568627450980392"
+			"color_face_4": {
+				"index": 4,
+				"order": 104,
+				"text": "Color 5",
+				"type": "color",
+				"value": "0.8431372549019608 0.1568627450980392 0.1568627450980392"
 			},
-			"color_face_5" :
-			{
-				"index" : 5,
-				"order" : 105,
-				"text" : "Color 6",
-				"type" : "color",
-				"value" : "1 0.34509803921568627 0"
+			"color_face_5": {
+				"index": 5,
+				"order": 105,
+				"text": "Color 6",
+				"type": "color",
+				"value": "1 0.34509803921568627 0"
 			},
-			"animation_mode" :
-			{
-				"index" : 10,
-				"order" : 109,
-				"text" : "Animation Mode",
-				"type" : "combo",
-				"value" : "random",
-				"options" :
-				[
-					{ "label" : "Random", "value" : "random" },
-					{ "label" : "Synchronized", "value" : "synchronized" },
-					{ "label" : "Wave", "value" : "wave" },
-					{ "label" : "Wave Right", "value" : "wave_right" },
-					{ "label" : "Wave Left", "value" : "wave_left" },
-					{ "label" : "Ripple", "value" : "ripple" },
-					{ "label" : "N Permutations", "value" : "n_permutations" }
+			"animation_mode": {
+				"index": 10,
+				"order": 109,
+				"text": "Animation Mode",
+				"type": "combo",
+				"value": "random",
+				"options": [
+					{
+						"label": "Random",
+						"value": "random"
+					},
+					{
+						"label": "Synchronized",
+						"value": "synchronized"
+					},
+					{
+						"label": "Wave",
+						"value": "wave"
+					},
+					{
+						"label": "Wave Right",
+						"value": "wave_right"
+					},
+					{
+						"label": "Wave Left",
+						"value": "wave_left"
+					},
+					{
+						"label": "Ripple",
+						"value": "ripple"
+					},
+					{
+						"label": "N Permutations",
+						"value": "n_permutations"
+					}
 				]
 			},
-			"num_permutations" :
-			{
-				"condition" : "animation_mode.value == 'n_permutations'",
-				"fraction" : false,
-				"index" : 11,
-				"max" : 100,
-				"min" : 1,
-				"order" : 110,
-				"text" : "Number of Permutations",
-				"type" : "slider",
-				"value" : 5
+			"num_permutations": {
+				"condition": "animation_mode.value == 'n_permutations'",
+				"fraction": false,
+				"index": 11,
+				"max": 100,
+				"min": 1,
+				"order": 110,
+				"text": "Number of Permutations",
+				"type": "slider",
+				"value": 5
 			},
-		"natural_rotations" :
-			{
-				"index" : 12,
-				"order" : 111,
-				"text" : "Natural Rotations",
-				"type" : "bool",
-				"value" : false
+			"natural_rotations": {
+				"index": 12,
+				"order": 111,
+				"text": "Natural Rotations",
+				"type": "bool",
+				"value": false
 			},
-			"time_between_rotations" :
-			{
-				"fraction" : true,
-				"index" : 13,
-				"max" : 10,
-				"min" : 0,
-				"order" : 112,
-				"precision" : 1,
-				"step" : 0.1,
-				"text" : "Time Between Rotations",
-				"type" : "slider",
-				"value" : 0
+			"random_starting_orientation": {
+				"index": 17,
+				"order": 116,
+				"text": "Random Starting Orientation",
+				"type": "bool",
+				"value": false
 			},
-			"time_between_animations" :
-			{
-				"condition" : "animation_mode.value != 'random'",
-				"fraction" : true,
-				"index" : 14,
-				"max" : 10,
-				"min" : 0,
-				"order" : 113,
-				"precision" : 1,
-				"step" : 0.1,
-				"text" : "Time Between Animations",
-				"type" : "slider",
-				"value" : 3
+			"time_between_rotations": {
+				"fraction": true,
+				"index": 13,
+				"max": 10,
+				"min": 0,
+				"order": 112,
+				"precision": 1,
+				"step": 0.1,
+				"text": "Time Between Rotations",
+				"type": "slider",
+				"value": 0
 			},
-			"vignette" :
-			{
-				"fraction" : false,
-				"index" : 15,
-				"max" : 100,
-				"min" : 0,
-				"order" : 114,
-				"text" : "Vignette",
-				"type" : "slider",
-				"value" : 0
+			"time_between_animations": {
+				"condition": "animation_mode.value != 'random'",
+				"fraction": true,
+				"index": 14,
+				"max": 10,
+				"min": 0,
+				"order": 113,
+				"precision": 1,
+				"step": 0.1,
+				"text": "Time Between Animations",
+				"type": "slider",
+				"value": 3
 			},
-			"cube_spacing" :
-			{
-				"fraction" : false,
-				"index" : 6,
-				"max" : 100,
-				"min" : 0,
-				"order" : 106,
-				"text" : "Cube Spacing",
-				"type" : "slider",
-				"value" : 0
+			"vignette": {
+				"fraction": false,
+				"index": 15,
+				"max": 100,
+				"min": 0,
+				"order": 114,
+				"text": "Vignette",
+				"type": "slider",
+				"value": 0
 			},
-			"move_speed" :
-			{
-				"fraction" : true,
-				"index" : 7,
-				"max" : 10,
-				"min" : 0,
-				"order" : 107,
-				"precision" : 2,
-				"step" : 0.1,
-				"text" : "Rotation Speed",
-				"type" : "slider",
-				"value" : 2
+			"cube_spacing": {
+				"fraction": false,
+				"index": 6,
+				"max": 100,
+				"min": 0,
+				"order": 106,
+				"text": "Cube Spacing",
+				"type": "slider",
+				"value": 0
 			},
-			"schemecolor" :
-			{
-				"order" : 0,
-				"text" : "ui_browse_properties_scheme_color",
-				"type" : "color",
-				"value" : "0 0 0"
+			"move_speed": {
+				"fraction": true,
+				"index": 7,
+				"max": 10,
+				"min": 0,
+				"order": 107,
+				"precision": 2,
+				"step": 0.1,
+				"text": "Rotation Speed",
+				"type": "slider",
+				"value": 2
+			},
+			"schemecolor": {
+				"order": 0,
+				"text": "ui_browse_properties_scheme_color",
+				"type": "color",
+				"value": "0 0 0"
 			}
 		}
 	},
-	"preview" : "preview.jpg",
-	"snapshotformat" : -1,
-	"snapshotoverlay" : "",
-	"title" : "Speed Cube",
-	"type" : "web",
-	"version" : 0
+	"preview": "preview.jpg",
+	"snapshotformat": -1,
+	"snapshotoverlay": "",
+	"title": "Speed Cube",
+	"type": "web",
+	"version": 0
 }

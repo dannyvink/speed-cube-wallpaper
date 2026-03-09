@@ -9,6 +9,7 @@ let CUBE_SPACING = 30.0;
 let ANIMATION_MODE = 0; // 0=Random, 1=Synchronized, 2=Wave Right, 3=N Permutations, 4=Wave Left, 5=Ripple, 6=Wave
 let NUM_PERMUTATIONS = 5;
 let NATURAL_ROTATIONS = false;
+let RANDOM_STARTING_ROTATION = false;
 let TIME_BETWEEN_ROTATIONS = 0;
 let TIME_BETWEEN_ANIMATIONS = 3;
 const CUBIES_PER_CUBE = 26;
@@ -154,7 +155,7 @@ function initGrid() {
       const w = -(u + v);
 
       const worldPos = new THREE.Vector3(u, v, w).multiplyScalar(CUBE_SPACING);
-      const cube = new Cube(worldPos, MOVE_SPEED);
+      const cube = new Cube(worldPos, MOVE_SPEED, RANDOM_STARTING_ROTATION);
       cubes.push(cube);
     }
   }
@@ -204,8 +205,8 @@ function initGrid() {
       aCubieType.setX(idx, cubie.typeMask);
       aInstancePos.setXYZ(idx, cube.worldPos.x, cube.worldPos.y, cube.worldPos.z);
       aLocalPos.setXYZ(idx, cubie.initialPos.x, cubie.initialPos.y, cubie.initialPos.z);
-      aQuatA.setXYZW(idx, 0, 0, 0, 1);
-      aQuatB.setXYZW(idx, 0, 0, 0, 1);
+      aQuatA.setXYZW(idx, cubie.currentQuat.x, cubie.currentQuat.y, cubie.currentQuat.z, cubie.currentQuat.w);
+      aQuatB.setXYZW(idx, cubie.targetQuat.x, cubie.targetQuat.y, cubie.targetQuat.z, cubie.targetQuat.w);
       aProgress.setX(idx, 0);
       idx++;
     }
@@ -327,6 +328,11 @@ function applyWallpaperColor(index: number, value: string) {
       for (const cube of cubes) {
         cube.naturalRotations = NATURAL_ROTATIONS;
       }
+    }
+
+    if (properties.random_starting_orientation) {
+      RANDOM_STARTING_ROTATION = properties.random_starting_orientation.value as boolean;
+      needsReset = true;
     }
 
     if (properties.time_between_rotations) {

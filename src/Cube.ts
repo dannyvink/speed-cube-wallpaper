@@ -26,7 +26,7 @@ export class Cube {
   movePauseTimer = 0;
   waveBidirFlipped = false;
 
-  constructor(worldPos: THREE.Vector3, moveSpeed: number = 4) {
+  constructor(worldPos: THREE.Vector3, moveSpeed: number = 4, randomStartingRotation: boolean = false) {
     this.worldPos = worldPos;
     this.moveSpeed = moveSpeed;
     for (let x = -1; x <= 1; x++) {
@@ -43,6 +43,20 @@ export class Cube {
           });
         }
       }
+    }
+    if (randomStartingRotation) this.applyRandomOrientation();
+  }
+
+  private applyRandomOrientation() {
+    const axes = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
+    const q = new THREE.Quaternion();
+    for (const axis of axes) {
+      const turns = Math.floor(Math.random() * 4);
+      if (turns > 0) q.multiply(new THREE.Quaternion().setFromAxisAngle(axis, turns * Math.PI / 2));
+    }
+    for (const cubie of this.cubies) {
+      cubie.currentQuat.copy(q);
+      cubie.targetQuat.copy(q);
     }
   }
 

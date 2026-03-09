@@ -218,45 +218,66 @@ export function initDevMenu() {
   const animModes = [
     { label: 'Random',          value: 'random' },
     { label: 'Synchronized',    value: 'synchronized' },
+    { label: 'Wave',            value: 'wave' },
     { label: 'Wave Right',      value: 'wave_right' },
-    { label: 'N Permutations',  value: 'n_permutations' },
     { label: 'Wave Left',       value: 'wave_left' },
     { label: 'Ripple',          value: 'ripple' },
-    { label: 'Wave',            value: 'wave' },
+    { label: 'N Permutations',  value: 'n_permutations' },
   ];
+
+  let currentMode = 'random';
+
+  const timeBetweenAnimsRow = row('Time Between Anims',
+    numInput(3, 0, 10, 0.1, v => applyUser({ time_between_animations: { value: v } }))
+  );
+  const numPermRow = row('N Permutations',
+    numInput(5, 1, 100, 1, v => applyUser({ num_permutations: { value: v } }))
+  );
+
+  function updateConditionals(mode: string) {
+    timeBetweenAnimsRow.style.display = mode !== 'random' ? 'flex' : 'none';
+    numPermRow.style.display = mode === 'n_permutations' ? 'flex' : 'none';
+  }
+
   panel.appendChild(row('Mode',
-    selectInput(animModes, 'random', v => applyUser({ animation_mode: { value: v } }))
+    selectInput(animModes, currentMode, v => {
+      currentMode = v;
+      applyUser({ animation_mode: { value: v } });
+      updateConditionals(v);
+    })
   ));
 
   panel.appendChild(row('Natural Rotations',
     checkboxInput(false, v => applyUser({ natural_rotations: { value: v } }))
   ));
 
-  panel.appendChild(row('Move Speed',
-    numInput(2.0, 0.1, 10, 0.1, v => applyUser({ move_speed: { value: v } }))
+  panel.appendChild(row('Random Starting Orientation',
+    checkboxInput(false, v => applyUser({ random_starting_orientation: { value: v } }))
+  ));
+
+  panel.appendChild(row('Rotation Speed',
+    numInput(2.0, 0, 10, 0.1, v => applyUser({ move_speed: { value: v } }))
   ));
 
   panel.appendChild(row('Time Between Rotations',
-    numInput(0, 0, 5, 0.1, v => applyUser({ time_between_rotations: { value: v } }))
+    numInput(0, 0, 10, 0.1, v => applyUser({ time_between_rotations: { value: v } }))
   ));
 
-  panel.appendChild(row('Time Between Anims',
-    numInput(3, 0, 15, 0.5, v => applyUser({ time_between_animations: { value: v } }))
-  ));
+  panel.appendChild(timeBetweenAnimsRow);
+  panel.appendChild(numPermRow);
 
-  panel.appendChild(row('N Permutations',
-    numInput(5, 1, 30, 1, v => applyUser({ num_permutations: { value: v } }))
-  ));
+  // Apply initial conditional visibility (default mode is 'random')
+  updateConditionals(currentMode);
 
   // ── Layout ───────────────────────────────────────────────
   panel.appendChild(section('Layout'));
 
   panel.appendChild(row('Cube Spacing',
-    numInput(0, -20, 100, 1, v => applyUser({ cube_spacing: { value: v } }))
+    numInput(0, 0, 100, 1, v => applyUser({ cube_spacing: { value: v } }))
   ));
 
   panel.appendChild(row('Camera Depth',
-    numInput(150, 50, 500, 10, v => applyUser({ camera_depth: { value: v } }))
+    numInput(150, 1, 300, 1, v => applyUser({ camera_depth: { value: v } }))
   ));
 
   host.appendChild(toggle);
