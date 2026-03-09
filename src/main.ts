@@ -3,14 +3,17 @@ import { Cube } from './Cube';
 import vert from './shaders/cubie.vert.glsl';
 import frag from './shaders/cubie.frag.glsl';
 
-const MOVE_SPEED = 4.0;
-const spacing = 30.0;
+let MOVE_SPEED = 2.0;
+let CUBE_SPACING = 30.0;
 const CUBIES_PER_CUBE = 26;
 
 const scene = new THREE.Scene();
-const aspect = window.innerWidth / window.innerHeight;
-const d = 150;
-const camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 100000);
+let CAMERA_DEPTH = 150;
+const camera = new THREE.OrthographicCamera(
+  -CAMERA_DEPTH * (window.innerWidth / window.innerHeight),
+  CAMERA_DEPTH * (window.innerWidth / window.innerHeight),
+  CAMERA_DEPTH, -CAMERA_DEPTH, 1, 100000
+);
 
 camera.position.set(200, 200, 200);
 camera.lookAt(0, 0, 0);
@@ -64,20 +67,22 @@ function initGrid() {
     cubes = [];
   }
 
-  // Calculate needed width and height to fill screen based on 'd' and 'aspect'
-  // In orthographic with d=150, the vertical view is -150 to 150 (300 units)
-  // Horizontal is 300 * aspect. 
+  const aspect = window.innerWidth / window.innerHeight;
+
+  // Calculate needed width and height to fill screen based on 'CAMERA_DEPTH' and 'aspect'
+  // In orthographic with CAMERA_DEPTH=150, the vertical view is -150 to 150 (300 units)
+  // Horizontal is 300 * aspect.
   // We add a buffer of 5 cubes on each side to ensure coverage during rotation
-  const viewHeight = d * 2;
+  const viewHeight = CAMERA_DEPTH * 2;
   const viewWidth = viewHeight * aspect;
   
-  const widthCount = Math.ceil(viewWidth / (spacing * 0.8)) + 10;
-  const heightCount = Math.ceil(viewHeight / (spacing * 0.8)) + 10;
+  const widthCount = Math.ceil(viewWidth / (CUBE_SPACING * 0.8)) + 10;
+  const heightCount = Math.ceil(viewHeight / (CUBE_SPACING * 0.8)) + 10;
   
   const totalCubes = widthCount * heightCount;
   const totalInstances = totalCubes * CUBIES_PER_CUBE;
 
-  instancedGeom = new THREE.InstancedBufferGeometry().copy(baseGeom);
+  instancedGeom = new THREE.InstancedBufferGeometry().copy(baseGeom as unknown as THREE.InstancedBufferGeometry);
   instancedGeom.instanceCount = totalInstances;
 
   aCubieType = new THREE.InstancedBufferAttribute(new Float32Array(totalInstances), 1);
@@ -104,7 +109,7 @@ function initGrid() {
       const v = j - heightCount / 2;
       const w = -(u + v);
 
-      const worldPos = new THREE.Vector3(u, v, w).multiplyScalar(spacing);
+      const worldPos = new THREE.Vector3(u, v, w).multiplyScalar(CUBE_SPACING);
       const cube = new Cube(worldPos, MOVE_SPEED);
       cubes.push(cube);
     }
@@ -162,15 +167,56 @@ function animate() {
 
 window.addEventListener('resize', () => {
   const newAspect = window.innerWidth / window.innerHeight;
-  camera.left = -d * newAspect;
-  camera.right = d * newAspect;
-  camera.top = d;
-  camera.bottom = -d;
+  camera.left = -CAMERA_DEPTH * newAspect;
+  camera.right = CAMERA_DEPTH * newAspect;
+  camera.top = CAMERA_DEPTH;
+  camera.bottom = -CAMERA_DEPTH;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  
-  // Re-init grid if aspect ratio changed significantly to ensure coverage
   initGrid();
 });
+
+function applyWallpaperColor(index: number, value: string) {
+  const parts = value.split(' ');
+  material.uniforms.palette.value[index].setRGB(
+    parseFloat(parts[0]),
+    parseFloat(parts[1]),
+    parseFloat(parts[2])
+  );
+}
+
+(window as any).wallpaperPropertyListener = {
+  applyUserProperties(properties: Record<string, { value: any }>) {
+    if (properties.color_face_0) applyWallpaperColor(0, properties.color_face_0.value);
+    if (properties.color_face_1) applyWallpaperColor(1, properties.color_face_1.value);
+    if (properties.color_face_2) applyWallpaperColor(2, properties.color_face_2.value);
+    if (properties.color_face_3) applyWallpaperColor(3, properties.color_face_3.value);
+    if (properties.color_face_4) applyWallpaperColor(4, properties.color_face_4.value);
+    if (properties.color_face_5) applyWallpaperColor(5, properties.color_face_5.value);
+
+    if (properties.cube_spacing) {
+      CUBE_SPACING = properties.cube_spacing.value;
+      initGrid();
+    }
+
+    if (properties.move_speed) {
+      MOVE_SPEED = properties.move_speed.value;
+      for (const cube of cubes) {
+        cube.moveSpeed = MOVE_SPEED;
+      }
+    }
+
+    if (properties.camera_depth) {
+      CAMERA_DEPTH = properties.camera_depth.value;
+      const aspect = window.innerWidth / window.innerHeight;
+      camera.left = -CAMERA_DEPTH * aspect;
+      camera.right = CAMERA_DEPTH * aspect;
+      camera.top = CAMERA_DEPTH;
+      camera.bottom = -CAMERA_DEPTH;
+      camera.updateProjectionMatrix();
+      initGrid();
+    }
+  }
+};
 
 animate();

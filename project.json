@@ -1,0 +1,80 @@
+{
+  "contentrating": "Everyone",
+  "description": "",
+  "file": "index.html",
+  "preview": "preview.gif",
+  "tags": [],
+  "title": "cubie",
+  "type": "web",
+  "version": 2,
+  "general": {
+    "properties": {
+      "color_face_0": {
+        "order": 0,
+        "text": "Face Color: +X (White)",
+        "type": "color",
+        "value": "0.988 0.988 0.988"
+      },
+      "color_face_1": {
+        "order": 1,
+        "text": "Face Color: -X (Yellow)",
+        "type": "color",
+        "value": "0.965 0.925 0.129"
+      },
+      "color_face_2": {
+        "order": 2,
+        "text": "Face Color: +Y (Green)",
+        "type": "color",
+        "value": "0.000 0.620 0.357"
+      },
+      "color_face_3": {
+        "order": 3,
+        "text": "Face Color: -Y (Blue)",
+        "type": "color",
+        "value": "0.000 0.314 0.643"
+      },
+      "color_face_4": {
+        "order": 4,
+        "text": "Face Color: +Z (Red)",
+        "type": "color",
+        "value": "0.843 0.157 0.157"
+      },
+      "color_face_5": {
+        "order": 5,
+        "text": "Face Color: -Z (Orange)",
+        "type": "color",
+        "value": "1.000 0.345 0.000"
+      },
+      "cube_spacing": {
+        "order": 6,
+        "text": "Cube Spacing",
+        "type": "slider",
+        "min": 10,
+        "max": 80,
+        "step": 1,
+        "precision": 0,
+        "value": 30
+      },
+      "move_speed": {
+        "order": 7,
+        "text": "Animation Speed",
+        "type": "slider",
+        "min": 0.1,
+        "max": 10,
+        "step": 0.1,
+        "precision": 1,
+        "value": 2
+      },
+      "camera_depth": {
+        "order": 8,
+        "text": "Camera Zoom",
+        "type": "slider",
+        "min": 50,
+        "max": 400,
+        "step": 10,
+        "precision": 0,
+        "value": 150
+      }
+    }
+  }
+}

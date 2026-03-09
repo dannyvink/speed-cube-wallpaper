@@ -13,8 +13,12 @@ export class Cube {
   animating = false;
   progress = 0;
   waitTimer = Math.random() * 5;
+  worldPos: THREE.Vector3;
+  moveSpeed: number;
 
-  constructor(public worldPos: THREE.Vector3, public moveSpeed: number = 4) {
+  constructor(worldPos: THREE.Vector3, moveSpeed: number = 4) {
+    this.worldPos = worldPos;
+    this.moveSpeed = moveSpeed;
     for (let x = -1; x <= 1; x++) {
       for (let y = -1; y <= 1; y++) {
         for (let z = -1; z <= 1; z++) {
