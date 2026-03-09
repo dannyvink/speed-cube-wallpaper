@@ -18,6 +18,11 @@ export class Cube {
   animationMode = 0;
   waveMoveFactor = 0;
   numPermutations = 5;
+  imperfectRotations = false;
+  moveOvershoot = 0;
+  timeBetweenRotations = 0;
+  movePauseTimer = 0;
+  waveBidirFlipped = false;
 
   constructor(worldPos: THREE.Vector3, moveSpeed: number = 4) {
     this.worldPos = worldPos;
@@ -56,14 +61,20 @@ export class Cube {
       if (this.progress >= 1) {
         this.progress = 0;
         this.animating = false;
+        this.movePauseTimer = this.timeBetweenRotations;
         for (const cubie of this.cubies) {
           cubie.currentQuat.copy(cubie.targetQuat);
         }
       }
+    } else if (this.movePauseTimer > 0) {
+      this.movePauseTimer -= delta;
     } else if (this.moveQueue.length > 0) {
       const move = this.moveQueue.shift()!;
       this.executeMove(move);
       this.animating = true;
+      this.moveOvershoot = this.imperfectRotations
+        ? (Math.random() < 0.25 ? 2.5 + Math.random() * 2.5 : 0.3 + Math.random() * 0.7)
+        : 0;
     } else {
       this.waitTimer -= delta;
       if (this.waitTimer <= 0) {
@@ -75,8 +86,17 @@ export class Cube {
           // N Permutations: user-controlled move count, synchronized timing
           this.scramble(this.numPermutations);
           this.waitTimer = 3;
+        } else if (this.animationMode === 6) {
+          // Wave (bidirectional): alternate right→left→right each cycle.
+          // The stagger is baked into waitTimer so all cubes re-sync naturally.
+          this.waveBidirFlipped = !this.waveBidirFlipped;
+          const nextStagger = this.waveBidirFlipped
+            ? (1 - this.waveMoveFactor) * 8
+            : this.waveMoveFactor * 8;
+          this.scramble(10);
+          this.waitTimer = 3 + nextStagger;
         } else {
-          // Synchronized & Wave: fixed move count and wait.
+          // Synchronized, Wave Right/Left, Ripple: fixed move count and wait.
           // Wave cubes are pre-staggered via waitTimer set in initGrid().
           this.scramble(10);
           this.waitTimer = 3;

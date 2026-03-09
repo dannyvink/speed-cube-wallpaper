@@ -5,8 +5,10 @@ import frag from './shaders/cubie.frag.glsl';
 
 let MOVE_SPEED = 2.0;
 let CUBE_SPACING = 30.0;
-let ANIMATION_MODE = 0; // 0=Random, 1=Synchronized, 2=Wave (right), 3=N Permutations, 4=Wave (left), 5=Ripple
+let ANIMATION_MODE = 0; // 0=Random, 1=Synchronized, 2=Wave Right, 3=N Permutations, 4=Wave Left, 5=Ripple, 6=Wave
 let NUM_PERMUTATIONS = 5;
+let IMPERFECT_ROTATIONS = false;
+let TIME_BETWEEN_ROTATIONS = 0;
 const CUBIES_PER_CUBE = 26;
 
 const scene = new THREE.Scene();
@@ -126,10 +128,12 @@ function initGrid() {
     cube.waveMoveFactor = (cube.worldPos.x - cube.worldPos.z - screenXMin) / screenXRange;
     cube.animationMode = ANIMATION_MODE;
     cube.numPermutations = NUM_PERMUTATIONS;
+    cube.imperfectRotations = IMPERFECT_ROTATIONS;
+    cube.timeBetweenRotations = TIME_BETWEEN_ROTATIONS;
     if (ANIMATION_MODE === 1 || ANIMATION_MODE === 3) {
       cube.waitTimer = 0;
-    } else if (ANIMATION_MODE === 2) {
-      // Wave (to right): left starts first
+    } else if (ANIMATION_MODE === 2 || ANIMATION_MODE === 6) {
+      // Wave Right and Wave (bidirectional, first pass): left starts first
       cube.waitTimer = cube.waveMoveFactor * WAVE_STAGGER;
     } else if (ANIMATION_MODE === 4) {
       // Wave (to left): right starts first
@@ -163,6 +167,12 @@ function initGrid() {
 
 initGrid();
 
+// Back ease-out: t goes slightly above 1.0 before settling, producing overshoot in slerp
+function easeOutBack(t: number, overshoot: number): number {
+  const c3 = overshoot + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + overshoot * Math.pow(t - 1, 2);
+}
+
 const timer = new THREE.Timer();
 
 function animate() {
@@ -180,7 +190,10 @@ function animate() {
         for (const cubie of cube.cubies) {
             aQuatA.setXYZW(idx, cubie.currentQuat.x, cubie.currentQuat.y, cubie.currentQuat.z, cubie.currentQuat.w);
             aQuatB.setXYZW(idx, cubie.targetQuat.x, cubie.targetQuat.y, cubie.targetQuat.z, cubie.targetQuat.w);
-            aProgress.setX(idx, cube.progress);
+            const displayProgress = cube.moveOvershoot > 0
+              ? easeOutBack(cube.progress, cube.moveOvershoot)
+              : cube.progress;
+            aProgress.setX(idx, displayProgress);
             idx++;
         }
         updateNecessary = true;
@@ -234,8 +247,23 @@ function applyWallpaperColor(index: number, value: string) {
         : mode === 'n_permutations' ? 3
         : mode === 'wave_left' ? 4
         : mode === 'ripple' ? 5
+        : mode === 'wave' ? 6
         : 0;
       initGrid();
+    }
+
+    if (properties.imperfect_rotations) {
+      IMPERFECT_ROTATIONS = properties.imperfect_rotations.value as boolean;
+      for (const cube of cubes) {
+        cube.imperfectRotations = IMPERFECT_ROTATIONS;
+      }
+    }
+
+    if (properties.time_between_rotations) {
+      TIME_BETWEEN_ROTATIONS = properties.time_between_rotations.value;
+      for (const cube of cubes) {
+        cube.timeBetweenRotations = TIME_BETWEEN_ROTATIONS;
+      }
     }
 
     if (properties.num_permutations) {

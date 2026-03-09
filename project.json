@@ -82,8 +82,9 @@
 				[
 					{ "label" : "Random", "value" : "random" },
 					{ "label" : "Synchronized", "value" : "synchronized" },
-					{ "label" : "Wave (to right)", "value" : "wave_right" },
-					{ "label" : "Wave (to left)", "value" : "wave_left" },
+					{ "label" : "Wave", "value" : "wave" },
+					{ "label" : "Wave Right", "value" : "wave_right" },
+					{ "label" : "Wave Left", "value" : "wave_left" },
 					{ "label" : "Ripple", "value" : "ripple" },
 					{ "label" : "N Permutations", "value" : "n_permutations" }
 				]
@@ -99,6 +100,27 @@
 				"text" : "Number of Permutations",
 				"type" : "slider",
 				"value" : 5
+			},
+		"imperfect_rotations" :
+			{
+				"index" : 12,
+				"order" : 111,
+				"text" : "Imperfect Rotations",
+				"type" : "bool",
+				"value" : false
+			},
+			"time_between_rotations" :
+			{
+				"fraction" : true,
+				"index" : 13,
+				"max" : 10,
+				"min" : 0,
+				"order" : 112,
+				"precision" : 1,
+				"step" : 0.1,
+				"text" : "Time Between Rotations",
+				"type" : "slider",
+				"value" : 0
 			},
 			"cube_spacing" :
 			{
@@ -120,7 +142,7 @@
 				"order" : 107,
 				"precision" : 2,
 				"step" : 0.1,
-				"text" : "Move Speed",
+				"text" : "Rotation Speed",
 				"type" : "slider",
 				"value" : 2
 			},
