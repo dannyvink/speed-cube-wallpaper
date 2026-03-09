@@ -12,6 +12,11 @@ let TIME_BETWEEN_ROTATIONS = 0;
 let TIME_BETWEEN_ANIMATIONS = 3;
 const CUBIES_PER_CUBE = 26;
 
+// FPS Limiter State
+let targetFPS = 60;
+let lastFrameTime = performance.now() / 1000;
+let fpsThreshold = 0;
+
 const scene = new THREE.Scene();
 let CAMERA_DEPTH = 150;
 const camera = new THREE.OrthographicCamera(
@@ -212,6 +217,20 @@ const timer = new THREE.Timer();
 
 function animate() {
   requestAnimationFrame(animate);
+  
+  // FPS Limiter Logic
+  const now = performance.now() / 1000;
+  const dt = Math.min(now - lastFrameTime, 1); // Cap delta to 1s to prevent jumps
+  lastFrameTime = now;
+
+  if (targetFPS > 0) {
+    fpsThreshold += dt;
+    if (fpsThreshold < 1.0 / targetFPS) {
+      return; // Skip rendering
+    }
+    fpsThreshold -= 1.0 / targetFPS;
+  }
+
   timer.update();
   const delta = timer.getDelta();
 
@@ -268,6 +287,12 @@ function applyWallpaperColor(index: number, value: string) {
 }
 
 (window as any).wallpaperPropertyListener = {
+  applyGeneralProperties(properties: Record<string, any>) {
+    if (properties.fps) {
+      targetFPS = properties.fps;
+    }
+  },
+
   applyUserProperties(properties: Record<string, { value: any }>) {
     if (properties.color_face_0) applyWallpaperColor(0, properties.color_face_0.value);
     if (properties.color_face_1) applyWallpaperColor(1, properties.color_face_1.value);
