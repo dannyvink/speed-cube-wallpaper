@@ -17,6 +17,7 @@ export class Cube {
   moveSpeed: number;
   animationMode = 0;
   waveMoveFactor = 0;
+  waveStaggerOffset = 0;
   numPermutations = 5;
   naturalRotations = false;
   moveOvershoot = 0;
@@ -98,9 +99,9 @@ export class Cube {
           this.waitTimer = this.timeBetweenAnimations + nextStagger;
         } else {
           // Synchronized, Wave Right/Left, Ripple: fixed move count and wait.
-          // Wave cubes are pre-staggered via waitTimer set in initGrid().
+          // waveStaggerOffset preserves the per-cube stagger across every cycle.
           this.scramble(10);
-          this.waitTimer = this.timeBetweenAnimations;
+          this.waitTimer = this.timeBetweenAnimations + this.waveStaggerOffset;
         }
       }
     }

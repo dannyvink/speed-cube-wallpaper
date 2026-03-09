@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Cube } from './Cube';
 import vert from './shaders/cubie.vert.glsl';
 import frag from './shaders/cubie.frag.glsl';
+import { initDevMenu } from './devMenu';
 
 let MOVE_SPEED = 2.0;
 let CUBE_SPACING = 30.0;
@@ -172,12 +173,17 @@ function initGrid() {
     cube.timeBetweenAnimations = TIME_BETWEEN_ANIMATIONS;
     if (ANIMATION_MODE === 1 || ANIMATION_MODE === 3) {
       cube.waitTimer = 0;
+      cube.waveStaggerOffset = 0;
     } else if (ANIMATION_MODE === 2 || ANIMATION_MODE === 6) {
       // Wave Right and Wave (bidirectional, first pass): left starts first
+      cube.waveStaggerOffset = ANIMATION_MODE === 2 ? cube.waveMoveFactor * WAVE_STAGGER : 0;
       cube.waitTimer = cube.waveMoveFactor * WAVE_STAGGER;
     } else if (ANIMATION_MODE === 4) {
       // Wave (to left): right starts first
-      cube.waitTimer = (1 - cube.waveMoveFactor) * WAVE_STAGGER;
+      cube.waveStaggerOffset = (1 - cube.waveMoveFactor) * WAVE_STAGGER;
+      cube.waitTimer = cube.waveStaggerOffset;
+    } else {
+      cube.waveStaggerOffset = 0;
     }
   }
 
@@ -187,7 +193,8 @@ function initGrid() {
     const maxDist = Math.max(...distances);
     for (let i = 0; i < cubes.length; i++) {
       const normalizedDist = maxDist > 0 ? distances[i] / maxDist : 0;
-      cubes[i].waitTimer = (1 - normalizedDist) * WAVE_STAGGER;
+      cubes[i].waveStaggerOffset = (1 - normalizedDist) * WAVE_STAGGER;
+      cubes[i].waitTimer = cubes[i].waveStaggerOffset;
     }
   }
 
@@ -380,3 +387,7 @@ function applyWallpaperColor(index: number, value: string) {
 };
 
 animate();
+
+if (import.meta.env.DEV) {
+  initDevMenu();
+}
