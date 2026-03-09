@@ -122,6 +122,20 @@
 				"type" : "slider",
 				"value" : 0
 			},
+			"time_between_animations" :
+			{
+				"condition" : "animation_mode.value != 'random'",
+				"fraction" : true,
+				"index" : 14,
+				"max" : 10,
+				"min" : 0,
+				"order" : 113,
+				"precision" : 1,
+				"step" : 0.1,
+				"text" : "Time Between Animations",
+				"type" : "slider",
+				"value" : 3
+			},
 			"cube_spacing" :
 			{
 				"fraction" : false,

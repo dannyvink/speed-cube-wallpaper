@@ -21,6 +21,7 @@ export class Cube {
   imperfectRotations = false;
   moveOvershoot = 0;
   timeBetweenRotations = 0;
+  timeBetweenAnimations = 3;
   movePauseTimer = 0;
   waveBidirFlipped = false;
 
@@ -85,7 +86,7 @@ export class Cube {
         } else if (this.animationMode === 3) {
           // N Permutations: user-controlled move count, synchronized timing
           this.scramble(this.numPermutations);
-          this.waitTimer = 3;
+          this.waitTimer = this.timeBetweenAnimations;
         } else if (this.animationMode === 6) {
           // Wave (bidirectional): alternate right→left→right each cycle.
           // The stagger is baked into waitTimer so all cubes re-sync naturally.
@@ -94,12 +95,12 @@ export class Cube {
             ? (1 - this.waveMoveFactor) * 16
             : this.waveMoveFactor * 16;
           this.scramble(10);
-          this.waitTimer = 3 + nextStagger;
+          this.waitTimer = this.timeBetweenAnimations + nextStagger;
         } else {
           // Synchronized, Wave Right/Left, Ripple: fixed move count and wait.
           // Wave cubes are pre-staggered via waitTimer set in initGrid().
           this.scramble(10);
-          this.waitTimer = 3;
+          this.waitTimer = this.timeBetweenAnimations;
         }
       }
     }

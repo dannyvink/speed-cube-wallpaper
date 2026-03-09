@@ -9,6 +9,7 @@ let ANIMATION_MODE = 0; // 0=Random, 1=Synchronized, 2=Wave Right, 3=N Permutati
 let NUM_PERMUTATIONS = 5;
 let IMPERFECT_ROTATIONS = false;
 let TIME_BETWEEN_ROTATIONS = 0;
+let TIME_BETWEEN_ANIMATIONS = 3;
 const CUBIES_PER_CUBE = 26;
 
 const scene = new THREE.Scene();
@@ -130,6 +131,7 @@ function initGrid() {
     cube.numPermutations = NUM_PERMUTATIONS;
     cube.imperfectRotations = IMPERFECT_ROTATIONS;
     cube.timeBetweenRotations = TIME_BETWEEN_ROTATIONS;
+    cube.timeBetweenAnimations = TIME_BETWEEN_ANIMATIONS;
     if (ANIMATION_MODE === 1 || ANIMATION_MODE === 3) {
       cube.waitTimer = 0;
     } else if (ANIMATION_MODE === 2 || ANIMATION_MODE === 6) {
@@ -240,6 +242,8 @@ function applyWallpaperColor(index: number, value: string) {
     if (properties.color_face_4) applyWallpaperColor(4, properties.color_face_4.value);
     if (properties.color_face_5) applyWallpaperColor(5, properties.color_face_5.value);
 
+    let needsReset = false;
+
     if (properties.animation_mode) {
       const mode = properties.animation_mode.value as string;
       ANIMATION_MODE = mode === 'synchronized' ? 1
@@ -249,7 +253,7 @@ function applyWallpaperColor(index: number, value: string) {
         : mode === 'ripple' ? 5
         : mode === 'wave' ? 6
         : 0;
-      initGrid();
+      needsReset = true;
     }
 
     if (properties.imperfect_rotations) {
@@ -261,9 +265,12 @@ function applyWallpaperColor(index: number, value: string) {
 
     if (properties.time_between_rotations) {
       TIME_BETWEEN_ROTATIONS = properties.time_between_rotations.value;
-      for (const cube of cubes) {
-        cube.timeBetweenRotations = TIME_BETWEEN_ROTATIONS;
-      }
+      needsReset = true;
+    }
+
+    if (properties.time_between_animations) {
+      TIME_BETWEEN_ANIMATIONS = properties.time_between_animations.value;
+      needsReset = true;
     }
 
     if (properties.num_permutations) {
@@ -275,14 +282,12 @@ function applyWallpaperColor(index: number, value: string) {
 
     if (properties.cube_spacing) {
       CUBE_SPACING = 30 + properties.cube_spacing.value;
-      initGrid();
+      needsReset = true;
     }
 
     if (properties.move_speed) {
       MOVE_SPEED = properties.move_speed.value;
-      for (const cube of cubes) {
-        cube.moveSpeed = MOVE_SPEED;
-      }
+      needsReset = true;
     }
 
     if (properties.color_background) {
@@ -302,8 +307,10 @@ function applyWallpaperColor(index: number, value: string) {
       camera.top = CAMERA_DEPTH;
       camera.bottom = -CAMERA_DEPTH;
       camera.updateProjectionMatrix();
-      initGrid();
+      needsReset = true;
     }
+
+    if (needsReset) initGrid();
   }
 };
 
