@@ -51,7 +51,7 @@ All of the following are exposed as Wallpaper Engine properties (see `project.js
 |---|---|---|
 | `animation_mode` | combo | Animation timing mode (see below) |
 | `num_permutations` | slider (1–100) | Move count for N Permutations mode |
-| `imperfect_rotations` | bool | Adds random overshoot/ease-out-back to rotations |
+| `natural_rotations` | bool | Adds random overshoot/ease-out-back to rotations |
 | `time_between_rotations` | slider (0–10 s) | Pause between individual moves |
 | `cube_spacing` | slider (0–100) | Extra spacing between cubes (base = 30 units) |
 | `move_speed` | slider (0–10) | Rotation speed multiplier |
@@ -76,4 +76,4 @@ All of the following are exposed as Wallpaper Engine properties (see `project.js
 - **Surgical Updates:** When modifying shaders or core logic, ensure performance remains a priority due to the high instance count.
 - **Coordination:** The `Cube` class manages logical state; `main.ts` pushes that state to the GPU via `InstancedBufferAttribute.needsUpdate`.
 - **No unscramble tracking:** The scramble/unscramble sequence is generated up-front as moves + their inverse, queued together. There is no separate "solved state" check.
-- **Ease-out-back overshoot:** When `imperfectRotations` is on, `moveOvershoot` is set to a random value and applied via `easeOutBack()` in the animate loop before writing `aProgress`.
+- **Ease-out-back overshoot:** When `naturalRotations` is on, `moveOvershoot` is set to a random value and applied via `easeOutBack()` in the animate loop before writing `aProgress`.

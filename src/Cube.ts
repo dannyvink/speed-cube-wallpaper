@@ -18,7 +18,7 @@ export class Cube {
   animationMode = 0;
   waveMoveFactor = 0;
   numPermutations = 5;
-  imperfectRotations = false;
+  naturalRotations = false;
   moveOvershoot = 0;
   timeBetweenRotations = 0;
   timeBetweenAnimations = 3;
@@ -73,7 +73,7 @@ export class Cube {
       const move = this.moveQueue.shift()!;
       this.executeMove(move);
       this.animating = true;
-      this.moveOvershoot = this.imperfectRotations
+      this.moveOvershoot = this.naturalRotations
         ? (Math.random() < 0.25 ? 2.5 + Math.random() * 2.5 : 0.3 + Math.random() * 0.7)
         : 0;
     } else {

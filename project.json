@@ -101,11 +101,11 @@
 				"type" : "slider",
 				"value" : 5
 			},
-		"imperfect_rotations" :
+		"natural_rotations" :
 			{
 				"index" : 12,
 				"order" : 111,
-				"text" : "Imperfect Rotations",
+				"text" : "Natural Rotations",
 				"type" : "bool",
 				"value" : false
 			},
@@ -135,6 +135,17 @@
 				"text" : "Time Between Animations",
 				"type" : "slider",
 				"value" : 3
+			},
+			"vignette" :
+			{
+				"fraction" : false,
+				"index" : 15,
+				"max" : 100,
+				"min" : 0,
+				"order" : 114,
+				"text" : "Vignette",
+				"type" : "slider",
+				"value" : 0
 			},
 			"cube_spacing" :
 			{

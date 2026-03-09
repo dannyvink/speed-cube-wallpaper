@@ -7,7 +7,7 @@ let MOVE_SPEED = 2.0;
 let CUBE_SPACING = 30.0;
 let ANIMATION_MODE = 0; // 0=Random, 1=Synchronized, 2=Wave Right, 3=N Permutations, 4=Wave Left, 5=Ripple, 6=Wave
 let NUM_PERMUTATIONS = 5;
-let IMPERFECT_ROTATIONS = false;
+let NATURAL_ROTATIONS = false;
 let TIME_BETWEEN_ROTATIONS = 0;
 let TIME_BETWEEN_ANIMATIONS = 3;
 const CUBIES_PER_CUBE = 26;
@@ -28,6 +28,38 @@ renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x111111);
 document.body.appendChild(renderer.domElement);
+
+const vignetteMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    uColor: { value: new THREE.Color(0x111111) },
+    uAmount: { value: 0.0 },
+    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform vec3 uColor;
+    uniform float uAmount;
+    uniform vec2 uResolution;
+    varying vec2 vUv;
+    void main() {
+      vec2 uv = vUv - 0.5;
+      float dist = length(uv);
+      float vignette = smoothstep(0.5, 0.8, dist * (uAmount + 0.5));
+      gl_FragColor = vec4(uColor, vignette * uAmount);
+    }
+  `,
+  transparent: true,
+  depthTest: false,
+  depthWrite: false,
+});
+const vignetteMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), vignetteMaterial);
+vignetteMesh.frustumCulled = false;
 
 const baseGeom = new THREE.BoxGeometry(10.0, 10.0, 10.0);
 const faceIds = new Float32Array(baseGeom.attributes.position.count);
@@ -75,9 +107,6 @@ function initGrid() {
   const aspect = window.innerWidth / window.innerHeight;
 
   // Calculate needed width and height to fill screen based on 'CAMERA_DEPTH' and 'aspect'
-  // In orthographic with CAMERA_DEPTH=150, the vertical view is -150 to 150 (300 units)
-  // Horizontal is 300 * aspect.
-  // We add a buffer of 5 cubes on each side to ensure coverage during rotation
   const viewHeight = CAMERA_DEPTH * 2;
   const viewWidth = viewHeight * aspect;
   
@@ -107,6 +136,10 @@ function initGrid() {
   mesh = new THREE.Mesh(instancedGeom, material);
   mesh.frustumCulled = false;
   scene.add(mesh);
+  
+  // Ensure vignette is always on top
+  scene.remove(vignetteMesh);
+  scene.add(vignetteMesh);
 
   for (let i = 0; i < widthCount; i++) {
     for (let j = 0; j < heightCount; j++) {
@@ -129,7 +162,7 @@ function initGrid() {
     cube.waveMoveFactor = (cube.worldPos.x - cube.worldPos.z - screenXMin) / screenXRange;
     cube.animationMode = ANIMATION_MODE;
     cube.numPermutations = NUM_PERMUTATIONS;
-    cube.imperfectRotations = IMPERFECT_ROTATIONS;
+    cube.naturalRotations = NATURAL_ROTATIONS;
     cube.timeBetweenRotations = TIME_BETWEEN_ROTATIONS;
     cube.timeBetweenAnimations = TIME_BETWEEN_ANIMATIONS;
     if (ANIMATION_MODE === 1 || ANIMATION_MODE === 3) {
@@ -221,6 +254,7 @@ window.addEventListener('resize', () => {
   camera.bottom = -CAMERA_DEPTH;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  vignetteMaterial.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
   initGrid();
 });
 
@@ -256,10 +290,10 @@ function applyWallpaperColor(index: number, value: string) {
       needsReset = true;
     }
 
-    if (properties.imperfect_rotations) {
-      IMPERFECT_ROTATIONS = properties.imperfect_rotations.value as boolean;
+    if (properties.natural_rotations) {
+      NATURAL_ROTATIONS = properties.natural_rotations.value as boolean;
       for (const cube of cubes) {
-        cube.imperfectRotations = IMPERFECT_ROTATIONS;
+        cube.naturalRotations = NATURAL_ROTATIONS;
       }
     }
 
@@ -292,11 +326,17 @@ function applyWallpaperColor(index: number, value: string) {
 
     if (properties.color_background) {
       const parts = properties.color_background.value.split(' ');
-      renderer.setClearColor(new THREE.Color(
+      const color = new THREE.Color(
         parseFloat(parts[0]),
         parseFloat(parts[1]),
         parseFloat(parts[2])
-      ));
+      );
+      renderer.setClearColor(color);
+      vignetteMaterial.uniforms.uColor.value.copy(color);
+    }
+
+    if (properties.vignette) {
+      vignetteMaterial.uniforms.uAmount.value = properties.vignette.value / 100.0;
     }
 
     if (properties.camera_depth) {
