@@ -91,8 +91,8 @@ export class Cube {
           // The stagger is baked into waitTimer so all cubes re-sync naturally.
           this.waveBidirFlipped = !this.waveBidirFlipped;
           const nextStagger = this.waveBidirFlipped
-            ? (1 - this.waveMoveFactor) * 8
-            : this.waveMoveFactor * 8;
+            ? (1 - this.waveMoveFactor) * 16
+            : this.waveMoveFactor * 16;
           this.scramble(10);
           this.waitTimer = 3 + nextStagger;
         } else {
