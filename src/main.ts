@@ -1,32 +1,30 @@
 import * as THREE from 'three';
-import { Cube } from './Cube';
+import { Cube } from './cube';
 import vert from './shaders/cubie.vert.glsl';
 import frag from './shaders/cubie.frag.glsl';
 import { initDevMenu } from './devMenu';
+import { AnimationMode, ANIMATION_MODE_MAP, DEFAULT_CUBE_CONFIG } from './types';
+import type { CubeConfig } from './types';
+import { CUBIES_PER_CUBE, CUBIE_SIZE, CULL_MARGIN, WAVE_STAGGER } from './constants';
 
-let MOVE_SPEED = 2.0;
-let CUBE_SPACING = 30.0;
-let ANIMATION_MODE = 0; // 0=Random, 1=Synchronized, 2=Wave Right, 3=N Permutations, 4=Wave Left, 5=Ripple, 6=Wave
-let NUM_PERMUTATIONS = 5;
-let NATURAL_ROTATIONS = false;
-let RANDOM_STARTING_ROTATION = false;
-let TIME_BETWEEN_ROTATIONS = 0;
-let TIME_BETWEEN_ANIMATIONS = 3;
-const CUBIES_PER_CUBE = 26;
+// ── Global animation config ────────────────────────────────────────
+let config: CubeConfig = { ...DEFAULT_CUBE_CONFIG };
+let cubeSpacing = 30.0;
+let randomStartingRotation = false;
 
-// FPS Limiter State
+// ── FPS limiter ────────────────────────────────────────────────────
 let targetFPS = 60;
 let lastFrameTime = performance.now() / 1000;
 let fpsThreshold = 0;
 
+// ── Scene setup ────────────────────────────────────────────────────
 const scene = new THREE.Scene();
-let CAMERA_DEPTH = 150;
+let cameraDepth = 150;
 const camera = new THREE.OrthographicCamera(
-  -CAMERA_DEPTH * (window.innerWidth / window.innerHeight),
-  CAMERA_DEPTH * (window.innerWidth / window.innerHeight),
-  CAMERA_DEPTH, -CAMERA_DEPTH, 1, 100000
+  -cameraDepth * (window.innerWidth / window.innerHeight),
+  cameraDepth * (window.innerWidth / window.innerHeight),
+  cameraDepth, -cameraDepth, 1, 100000
 );
-
 camera.position.set(200, 200, 200);
 camera.lookAt(0, 0, 0);
 
@@ -36,6 +34,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x111111);
 document.body.appendChild(renderer.domElement);
 
+// ── Vignette overlay ───────────────────────────────────────────────
 const vignetteMaterial = new THREE.ShaderMaterial({
   uniforms: {
     uColor: { value: new THREE.Color(0x111111) },
@@ -68,7 +67,8 @@ const vignetteMaterial = new THREE.ShaderMaterial({
 const vignetteMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), vignetteMaterial);
 vignetteMesh.frustumCulled = false;
 
-const baseGeom = new THREE.BoxGeometry(10.0, 10.0, 10.0);
+// ── Base geometry ──────────────────────────────────────────────────
+const baseGeom = new THREE.BoxGeometry(CUBIE_SIZE, CUBIE_SIZE, CUBIE_SIZE);
 const faceIds = new Float32Array(baseGeom.attributes.position.count);
 for (let i = 0; i < 6; i++) {
   for (let j = 0; j < 4; j++) {
@@ -77,9 +77,10 @@ for (let i = 0; i < 6; i++) {
 }
 baseGeom.setAttribute('aFaceId', new THREE.BufferAttribute(faceIds, 1));
 
+// ── Cube material ──────────────────────────────────────────────────
 const material = new THREE.ShaderMaterial({
   uniforms: {
-    uCullMargin: { value: 20.0 / CAMERA_DEPTH },
+    uCullMargin: { value: CULL_MARGIN / cameraDepth },
     palette: {
       value: [
         new THREE.Color(0xfcfcfc), // +X (White)
@@ -95,6 +96,7 @@ const material = new THREE.ShaderMaterial({
   fragmentShader: frag,
 });
 
+// ── Instance state ─────────────────────────────────────────────────
 let mesh: THREE.Mesh | null = null;
 let cubes: Cube[] = [];
 let instancedGeom: THREE.InstancedBufferGeometry;
@@ -107,8 +109,10 @@ let aQuatB: THREE.InstancedBufferAttribute;
 let aProgress: THREE.InstancedBufferAttribute;
 
 function updateCullMargin() {
-  material.uniforms.uCullMargin.value = 20.0 / CAMERA_DEPTH;
+  material.uniforms.uCullMargin.value = CULL_MARGIN / cameraDepth;
 }
+
+// ── Grid initialization ────────────────────────────────────────────
 
 function initGrid() {
   if (mesh) {
@@ -117,14 +121,12 @@ function initGrid() {
   }
 
   const aspect = window.innerWidth / window.innerHeight;
-
-  // Calculate needed width and height to fill screen based on 'CAMERA_DEPTH' and 'aspect'
-  const viewHeight = CAMERA_DEPTH * 2;
+  const viewHeight = cameraDepth * 2;
   const viewWidth = viewHeight * aspect;
-  
-  const widthCount = Math.ceil(viewWidth / (CUBE_SPACING * 0.8)) + 10;
-  const heightCount = Math.ceil(viewHeight / (CUBE_SPACING * 0.8)) + 10;
-  
+
+  const widthCount = Math.ceil(viewWidth / (cubeSpacing * 0.8)) + 10;
+  const heightCount = Math.ceil(viewHeight / (cubeSpacing * 0.8)) + 10;
+
   const totalCubes = widthCount * heightCount;
   const totalInstances = totalCubes * CUBIES_PER_CUBE;
 
@@ -148,7 +150,7 @@ function initGrid() {
   mesh = new THREE.Mesh(instancedGeom, material);
   mesh.frustumCulled = false;
   scene.add(mesh);
-  
+
   // Ensure vignette is always on top
   scene.remove(vignetteMesh);
   scene.add(vignetteMesh);
@@ -159,42 +161,41 @@ function initGrid() {
       const v = j - heightCount / 2;
       const w = -(u + v);
 
-      const worldPos = new THREE.Vector3(u, v, w).multiplyScalar(CUBE_SPACING);
-      const cube = new Cube(worldPos, MOVE_SPEED, RANDOM_STARTING_ROTATION);
-      cubes.push(cube);
+      const worldPos = new THREE.Vector3(u, v, w).multiplyScalar(cubeSpacing);
+      cubes.push(new Cube(worldPos, config, randomStartingRotation));
     }
   }
+
+  applyWaveStagger();
+  uploadInitialBuffers();
+}
+
+function applyWaveStagger() {
+  const mode = config.animationMode;
 
   // Screen-space X = worldPos.x - worldPos.z (right vector is (1,0,-1) in this isometric view)
   const screenXValues = cubes.map(c => c.worldPos.x - c.worldPos.z);
   const screenXMin = Math.min(...screenXValues);
   const screenXRange = Math.max(...screenXValues) - screenXMin || 1;
-  const WAVE_STAGGER = 8;
+
   for (const cube of cubes) {
     cube.waveMoveFactor = (cube.worldPos.x - cube.worldPos.z - screenXMin) / screenXRange;
-    cube.animationMode = ANIMATION_MODE;
-    cube.numPermutations = NUM_PERMUTATIONS;
-    cube.naturalRotations = NATURAL_ROTATIONS;
-    cube.timeBetweenRotations = TIME_BETWEEN_ROTATIONS;
-    cube.timeBetweenAnimations = TIME_BETWEEN_ANIMATIONS;
-    if (ANIMATION_MODE === 1 || ANIMATION_MODE === 3) {
+
+    if (mode === AnimationMode.Synchronized || mode === AnimationMode.NPermutations) {
       cube.waitTimer = 0;
       cube.waveStaggerOffset = 0;
-    } else if (ANIMATION_MODE === 2 || ANIMATION_MODE === 6) {
+    } else if (mode === AnimationMode.WaveRight || mode === AnimationMode.Wave) {
       // Wave Right and Wave (bidirectional, first pass): left starts first
-      cube.waveStaggerOffset = ANIMATION_MODE === 2 ? cube.waveMoveFactor * WAVE_STAGGER : 0;
+      cube.waveStaggerOffset = mode === AnimationMode.WaveRight ? cube.waveMoveFactor * WAVE_STAGGER : 0;
       cube.waitTimer = cube.waveMoveFactor * WAVE_STAGGER;
-    } else if (ANIMATION_MODE === 4) {
-      // Wave (to left): right starts first
+    } else if (mode === AnimationMode.WaveLeft) {
       cube.waveStaggerOffset = (1 - cube.waveMoveFactor) * WAVE_STAGGER;
       cube.waitTimer = cube.waveStaggerOffset;
-    } else {
-      cube.waveStaggerOffset = 0;
     }
+    // AnimationMode.Random and Ripple: no stagger override needed here
   }
 
-  if (ANIMATION_MODE === 5) {
-    // Ripple: outer cubes start first, center starts last
+  if (mode === AnimationMode.Ripple) {
     const distances = cubes.map(c => c.worldPos.length());
     const maxDist = Math.max(...distances);
     for (let i = 0; i < cubes.length; i++) {
@@ -203,7 +204,9 @@ function initGrid() {
       cubes[i].waitTimer = cubes[i].waveStaggerOffset;
     }
   }
+}
 
+function uploadInitialBuffers() {
   let idx = 0;
   for (const cube of cubes) {
     for (const cubie of cube.cubies) {
@@ -220,52 +223,49 @@ function initGrid() {
 
 initGrid();
 
+// ── Animation loop ─────────────────────────────────────────────────
+
 // Back ease-out: t goes slightly above 1.0 before settling, producing overshoot in slerp
 function easeOutBack(t: number, overshoot: number): number {
   const c3 = overshoot + 1;
   return 1 + c3 * Math.pow(t - 1, 3) + overshoot * Math.pow(t - 1, 2);
 }
 
-const timer = new THREE.Timer();
-
-function animate() {
-  requestAnimationFrame(animate);
-  
-  // FPS Limiter Logic
-  const now = performance.now() / 1000;
-  const dt = Math.min(now - lastFrameTime, 1); // Cap delta to 1s to prevent jumps
+function shouldSkipFrame(now: number): boolean {
+  const dt = Math.min(now - lastFrameTime, 1);
   lastFrameTime = now;
 
   if (targetFPS > 0) {
     fpsThreshold += dt;
     if (fpsThreshold < 1.0 / targetFPS) {
-      return; // Skip rendering
+      return true;
     }
     fpsThreshold -= 1.0 / targetFPS;
   }
+  return false;
+}
 
-  timer.update();
-  const delta = timer.getDelta();
-
+function updateCubes(delta: number) {
   let idx = 0;
   let updateNecessary = false;
+
   for (const cube of cubes) {
     const wasAnimating = cube.animating;
     cube.update(delta);
 
     if (wasAnimating || cube.animating) {
-        for (const cubie of cube.cubies) {
-            aQuatA.setXYZW(idx, cubie.currentQuat.x, cubie.currentQuat.y, cubie.currentQuat.z, cubie.currentQuat.w);
-            aQuatB.setXYZW(idx, cubie.targetQuat.x, cubie.targetQuat.y, cubie.targetQuat.z, cubie.targetQuat.w);
-            const displayProgress = cube.moveOvershoot > 0
-              ? easeOutBack(cube.progress, cube.moveOvershoot)
-              : cube.progress;
-            aProgress.setX(idx, displayProgress);
-            idx++;
-        }
-        updateNecessary = true;
+      for (const cubie of cube.cubies) {
+        aQuatA.setXYZW(idx, cubie.currentQuat.x, cubie.currentQuat.y, cubie.currentQuat.z, cubie.currentQuat.w);
+        aQuatB.setXYZW(idx, cubie.targetQuat.x, cubie.targetQuat.y, cubie.targetQuat.z, cubie.targetQuat.w);
+        const displayProgress = cube.moveOvershoot > 0
+          ? easeOutBack(cube.progress, cube.moveOvershoot)
+          : cube.progress;
+        aProgress.setX(idx, displayProgress);
+        idx++;
+      }
+      updateNecessary = true;
     } else {
-        idx += CUBIES_PER_CUBE;
+      idx += CUBIES_PER_CUBE;
     }
   }
 
@@ -274,17 +274,34 @@ function animate() {
     aQuatB.needsUpdate = true;
     aProgress.needsUpdate = true;
   }
+}
 
+const timer = new THREE.Timer();
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const now = performance.now() / 1000;
+  if (shouldSkipFrame(now)) return;
+
+  timer.update();
+  updateCubes(timer.getDelta());
   renderer.render(scene, camera);
 }
 
-window.addEventListener('resize', () => {
-  const newAspect = window.innerWidth / window.innerHeight;
-  camera.left = -CAMERA_DEPTH * newAspect;
-  camera.right = CAMERA_DEPTH * newAspect;
-  camera.top = CAMERA_DEPTH;
-  camera.bottom = -CAMERA_DEPTH;
+// ── Event handlers ─────────────────────────────────────────────────
+
+function updateCamera() {
+  const aspect = window.innerWidth / window.innerHeight;
+  camera.left = -cameraDepth * aspect;
+  camera.right = cameraDepth * aspect;
+  camera.top = cameraDepth;
+  camera.bottom = -cameraDepth;
   camera.updateProjectionMatrix();
+}
+
+window.addEventListener('resize', () => {
+  updateCamera();
   renderer.setSize(window.innerWidth, window.innerHeight);
   vignetteMaterial.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
   initGrid();
@@ -307,63 +324,54 @@ function applyWallpaperColor(index: number, value: string) {
   },
 
   applyUserProperties(properties: Record<string, { value: any }>) {
-    if (properties.color_face_0) applyWallpaperColor(0, properties.color_face_0.value);
-    if (properties.color_face_1) applyWallpaperColor(1, properties.color_face_1.value);
-    if (properties.color_face_2) applyWallpaperColor(2, properties.color_face_2.value);
-    if (properties.color_face_3) applyWallpaperColor(3, properties.color_face_3.value);
-    if (properties.color_face_4) applyWallpaperColor(4, properties.color_face_4.value);
-    if (properties.color_face_5) applyWallpaperColor(5, properties.color_face_5.value);
+    for (let i = 0; i < 6; i++) {
+      const key = `color_face_${i}`;
+      if (properties[key]) applyWallpaperColor(i, properties[key].value);
+    }
 
     let needsReset = false;
 
     if (properties.animation_mode) {
-      const mode = properties.animation_mode.value as string;
-      ANIMATION_MODE = mode === 'synchronized' ? 1
-        : mode === 'wave_right' ? 2
-        : mode === 'n_permutations' ? 3
-        : mode === 'wave_left' ? 4
-        : mode === 'ripple' ? 5
-        : mode === 'wave' ? 6
-        : 0;
+      config.animationMode = ANIMATION_MODE_MAP[properties.animation_mode.value] ?? AnimationMode.Random;
       needsReset = true;
     }
 
     if (properties.natural_rotations) {
-      NATURAL_ROTATIONS = properties.natural_rotations.value as boolean;
+      config.naturalRotations = properties.natural_rotations.value as boolean;
       for (const cube of cubes) {
-        cube.naturalRotations = NATURAL_ROTATIONS;
+        cube.config.naturalRotations = config.naturalRotations;
       }
     }
 
     if (properties.random_starting_orientation) {
-      RANDOM_STARTING_ROTATION = properties.random_starting_orientation.value as boolean;
+      randomStartingRotation = properties.random_starting_orientation.value as boolean;
       needsReset = true;
     }
 
     if (properties.time_between_rotations) {
-      TIME_BETWEEN_ROTATIONS = properties.time_between_rotations.value;
+      config.timeBetweenRotations = properties.time_between_rotations.value;
       needsReset = true;
     }
 
     if (properties.time_between_animations) {
-      TIME_BETWEEN_ANIMATIONS = properties.time_between_animations.value;
+      config.timeBetweenAnimations = properties.time_between_animations.value;
       needsReset = true;
     }
 
     if (properties.num_permutations) {
-      NUM_PERMUTATIONS = properties.num_permutations.value;
+      config.numPermutations = properties.num_permutations.value;
       for (const cube of cubes) {
-        cube.numPermutations = NUM_PERMUTATIONS;
+        cube.config.numPermutations = config.numPermutations;
       }
     }
 
     if (properties.cube_spacing) {
-      CUBE_SPACING = 30 + properties.cube_spacing.value;
+      cubeSpacing = 30 + properties.cube_spacing.value;
       needsReset = true;
     }
 
     if (properties.move_speed) {
-      MOVE_SPEED = properties.move_speed.value;
+      config.moveSpeed = properties.move_speed.value;
       needsReset = true;
     }
 
@@ -383,13 +391,8 @@ function applyWallpaperColor(index: number, value: string) {
     }
 
     if (properties.camera_depth) {
-      CAMERA_DEPTH = properties.camera_depth.value;
-      const aspect = window.innerWidth / window.innerHeight;
-      camera.left = -CAMERA_DEPTH * aspect;
-      camera.right = CAMERA_DEPTH * aspect;
-      camera.top = CAMERA_DEPTH;
-      camera.bottom = -CAMERA_DEPTH;
-      camera.updateProjectionMatrix();
+      cameraDepth = properties.camera_depth.value;
+      updateCamera();
       updateCullMargin();
       needsReset = true;
     }

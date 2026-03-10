@@ -5,6 +5,16 @@ type UserProps = Record<string, { value: any }>;
 const FACE_LABELS = ['+X (White)', '-X (Yellow)', '+Y (Green)', '-Y (Blue)', '+Z (Red)', '-Z (Orange)'];
 const FACE_DEFAULTS = ['#fcfcfc', '#f6ec21', '#009e5b', '#0050a4', '#d72828', '#ff5800'];
 
+const ANIM_MODES = [
+  { label: 'Random',          value: 'random' },
+  { label: 'Synchronized',    value: 'synchronized' },
+  { label: 'Wave',            value: 'wave' },
+  { label: 'Wave Right',      value: 'wave_right' },
+  { label: 'Wave Left',       value: 'wave_left' },
+  { label: 'Ripple',          value: 'ripple' },
+  { label: 'N Permutations',  value: 'n_permutations' },
+];
+
 function hexToWEColor(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
@@ -20,6 +30,8 @@ function applyGeneral(props: Record<string, any>) {
   (window as any).wallpaperPropertyListener.applyGeneralProperties(props);
 }
 
+// ── DOM helpers ─────────────────────────────────────────────────────
+
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   attrs: Partial<HTMLElementTagNameMap[K]> = {},
@@ -33,11 +45,8 @@ function el<K extends keyof HTMLElementTagNameMap>(
 
 function row(label: string, input: HTMLElement): HTMLElement {
   const wrapper = el('div', {}, {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '8px',
-    marginBottom: '6px',
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    gap: '8px', marginBottom: '6px',
   });
   const lbl = el('label', { textContent: label }, { flex: '1', opacity: '0.75', fontSize: '11px' });
   wrapper.append(lbl, input);
@@ -45,19 +54,23 @@ function row(label: string, input: HTMLElement): HTMLElement {
 }
 
 function section(title: string): HTMLElement {
-  const s = el('div', { textContent: title }, {
-    fontSize: '10px',
-    fontWeight: 'bold',
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
-    opacity: '0.5',
-    marginTop: '10px',
-    marginBottom: '4px',
-    borderBottom: '1px solid rgba(255,255,255,0.1)',
+  return el('div', { textContent: title }, {
+    fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.08em',
+    textTransform: 'uppercase', opacity: '0.5', marginTop: '10px',
+    marginBottom: '4px', borderBottom: '1px solid rgba(255,255,255,0.1)',
     paddingBottom: '3px',
   });
-  return s;
 }
+
+// ── Input builders ──────────────────────────────────────────────────
+
+const INPUT_STYLE: Partial<CSSStyleDeclaration> = {
+  background: 'rgba(255,255,255,0.08)',
+  border: '1px solid rgba(255,255,255,0.15)',
+  borderRadius: '4px',
+  color: 'inherit',
+  fontSize: '11px',
+};
 
 function numInput(value: number, min: number, max: number, step: number, onChange: (v: number) => void): HTMLElement {
   const wrapper = el('div', {}, { display: 'flex', gap: '4px', alignItems: 'center' });
@@ -70,14 +83,7 @@ function numInput(value: number, min: number, max: number, step: number, onChang
   slider.value = String(value);
 
   const num = el('input', {}, {
-    width: '42px',
-    background: 'rgba(255,255,255,0.08)',
-    border: '1px solid rgba(255,255,255,0.15)',
-    borderRadius: '4px',
-    color: 'inherit',
-    padding: '2px 4px',
-    fontSize: '11px',
-    textAlign: 'right',
+    ...INPUT_STYLE, width: '42px', padding: '2px 4px', textAlign: 'right',
   });
   num.type = 'number';
   num.min = String(min);
@@ -85,14 +91,8 @@ function numInput(value: number, min: number, max: number, step: number, onChang
   num.step = String(step);
   num.value = String(value);
 
-  slider.addEventListener('input', () => {
-    num.value = slider.value;
-    onChange(parseFloat(slider.value));
-  });
-  num.addEventListener('change', () => {
-    slider.value = num.value;
-    onChange(parseFloat(num.value));
-  });
+  slider.addEventListener('input', () => { num.value = slider.value; onChange(parseFloat(slider.value)); });
+  num.addEventListener('change', () => { slider.value = num.value; onChange(parseFloat(num.value)); });
 
   wrapper.append(slider, num);
   return wrapper;
@@ -116,13 +116,8 @@ function checkboxInput(checked: boolean, onChange: (v: boolean) => void): HTMLIn
 
 function selectInput(options: { label: string; value: string }[], current: string, onChange: (v: string) => void): HTMLSelectElement {
   const sel = el('select', {}, {
-    background: '#1a1a2a',
-    border: '1px solid rgba(255,255,255,0.15)',
-    borderRadius: '4px',
-    color: '#e0e0e0',
-    padding: '2px 4px',
-    fontSize: '11px',
-    cursor: 'pointer',
+    ...INPUT_STYLE, background: '#1a1a2a', color: '#e0e0e0',
+    padding: '2px 4px', cursor: 'pointer',
   });
   for (const opt of options) {
     const o = document.createElement('option');
@@ -137,150 +132,92 @@ function selectInput(options: { label: string; value: string }[], current: strin
   return sel;
 }
 
+// ── Convenience: create a row that applies a single user property ──
+
+function userPropNum(label: string, prop: string, value: number, min: number, max: number, step: number): HTMLElement {
+  return row(label, numInput(value, min, max, step, v => applyUser({ [prop]: { value: v } })));
+}
+
+function userPropColor(label: string, prop: string, defaultHex: string): HTMLElement {
+  return row(label, colorInput(defaultHex, hex => applyUser({ [prop]: { value: hexToWEColor(hex) } })));
+}
+
+function userPropCheckbox(label: string, prop: string, checked: boolean): HTMLElement {
+  return row(label, checkboxInput(checked, v => applyUser({ [prop]: { value: v } })));
+}
+
+// ── Init ────────────────────────────────────────────────────────────
+
 export function initDevMenu() {
-  // Outer container
   const host = el('div', {}, {
-    position: 'fixed',
-    top: '12px',
-    right: '12px',
-    zIndex: '9999',
-    fontFamily: 'ui-monospace, monospace',
-    fontSize: '12px',
-    color: '#e0e0e0',
-    userSelect: 'none',
+    position: 'fixed', top: '12px', right: '12px', zIndex: '9999',
+    fontFamily: 'ui-monospace, monospace', fontSize: '12px',
+    color: '#e0e0e0', userSelect: 'none',
   });
 
-  // Toggle button
   const toggle = el('button', { textContent: '⚙ SETTINGS' }, {
-    display: 'block',
-    marginLeft: 'auto',
-    padding: '4px 10px',
-    fontSize: '11px',
-    fontFamily: 'inherit',
-    background: 'rgba(20,20,30,0.85)',
-    border: '1px solid rgba(255,255,255,0.2)',
-    borderRadius: '6px',
-    color: '#e0e0e0',
-    cursor: 'pointer',
-    backdropFilter: 'blur(6px)',
-    marginBottom: '6px',
+    display: 'block', marginLeft: 'auto', padding: '4px 10px',
+    fontSize: '11px', fontFamily: 'inherit',
+    background: 'rgba(20,20,30,0.85)', border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: '6px', color: '#e0e0e0', cursor: 'pointer',
+    backdropFilter: 'blur(6px)', marginBottom: '6px',
   });
 
-  // Panel
   const panel = el('div', {}, {
-    background: 'rgba(18,18,28,0.92)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: '8px',
-    padding: '10px 12px',
-    width: '260px',
-    maxHeight: '90vh',
-    overflowY: 'auto',
-    backdropFilter: 'blur(10px)',
-    display: 'none',
-    boxSizing: 'border-box',
+    background: 'rgba(18,18,28,0.92)', border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '8px', padding: '10px 12px', width: '260px',
+    maxHeight: '90vh', overflowY: 'auto', backdropFilter: 'blur(10px)',
+    display: 'none', boxSizing: 'border-box',
   });
 
   toggle.addEventListener('click', () => {
     panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
   });
 
-  // ── General ──────────────────────────────────────────────
+  // ── General ──
   panel.appendChild(section('General'));
+  panel.appendChild(row('FPS limit', numInput(60, 1, 240, 1, v => applyGeneral({ fps: v }))));
 
-  panel.appendChild(row('FPS limit',
-    numInput(60, 1, 240, 1, v => applyGeneral({ fps: v }))
-  ));
-
-  // ── Colors ───────────────────────────────────────────────
+  // ── Colors ──
   panel.appendChild(section('Face Colors'));
-
   for (let i = 0; i < 6; i++) {
-    const idx = i;
-    panel.appendChild(row(FACE_LABELS[idx],
-      colorInput(FACE_DEFAULTS[idx], hex => {
-        applyUser({ [`color_face_${idx}`]: { value: hexToWEColor(hex) } });
-      })
-    ));
+    panel.appendChild(userPropColor(FACE_LABELS[i], `color_face_${i}`, FACE_DEFAULTS[i]));
   }
 
   panel.appendChild(section('Background'));
-  panel.appendChild(row('Color',
-    colorInput('#111111', hex => {
-      applyUser({ color_background: { value: hexToWEColor(hex) } });
-    })
-  ));
+  panel.appendChild(userPropColor('Color', 'color_background', '#111111'));
+  panel.appendChild(userPropNum('Vignette', 'vignette', 0, 0, 100, 1));
 
-  panel.appendChild(row('Vignette',
-    numInput(0, 0, 100, 1, v => applyUser({ vignette: { value: v } }))
-  ));
-
-  // ── Animation ────────────────────────────────────────────
+  // ── Animation ──
   panel.appendChild(section('Animation'));
 
-  const animModes = [
-    { label: 'Random',          value: 'random' },
-    { label: 'Synchronized',    value: 'synchronized' },
-    { label: 'Wave',            value: 'wave' },
-    { label: 'Wave Right',      value: 'wave_right' },
-    { label: 'Wave Left',       value: 'wave_left' },
-    { label: 'Ripple',          value: 'ripple' },
-    { label: 'N Permutations',  value: 'n_permutations' },
-  ];
-
   let currentMode = 'random';
-
-  const timeBetweenAnimsRow = row('Time Between Anims',
-    numInput(3, 0, 10, 0.1, v => applyUser({ time_between_animations: { value: v } }))
-  );
-  const numPermRow = row('N Permutations',
-    numInput(5, 1, 100, 1, v => applyUser({ num_permutations: { value: v } }))
-  );
+  const timeBetweenAnimsRow = userPropNum('Time Between Anims', 'time_between_animations', 3, 0, 10, 0.1);
+  const numPermRow = userPropNum('N Permutations', 'num_permutations', 5, 1, 100, 1);
 
   function updateConditionals(mode: string) {
     timeBetweenAnimsRow.style.display = mode !== 'random' ? 'flex' : 'none';
     numPermRow.style.display = mode === 'n_permutations' ? 'flex' : 'none';
   }
 
-  panel.appendChild(row('Mode',
-    selectInput(animModes, currentMode, v => {
-      currentMode = v;
-      applyUser({ animation_mode: { value: v } });
-      updateConditionals(v);
-    })
-  ));
+  panel.appendChild(row('Mode', selectInput(ANIM_MODES, currentMode, v => {
+    currentMode = v;
+    applyUser({ animation_mode: { value: v } });
+    updateConditionals(v);
+  })));
 
-  panel.appendChild(row('Natural Rotations',
-    checkboxInput(false, v => applyUser({ natural_rotations: { value: v } }))
-  ));
-
-  panel.appendChild(row('Random Starting Orientation',
-    checkboxInput(false, v => applyUser({ random_starting_orientation: { value: v } }))
-  ));
-
-  panel.appendChild(row('Rotation Speed',
-    numInput(2.0, 0, 10, 0.1, v => applyUser({ move_speed: { value: v } }))
-  ));
-
-  panel.appendChild(row('Time Between Rotations',
-    numInput(0, 0, 10, 0.1, v => applyUser({ time_between_rotations: { value: v } }))
-  ));
-
+  panel.appendChild(userPropCheckbox('Natural Rotations', 'natural_rotations', false));
+  panel.appendChild(userPropCheckbox('Random Starting Orientation', 'random_starting_orientation', false));
+  panel.appendChild(userPropNum('Rotation Speed', 'move_speed', 2.0, 0, 10, 0.1));
+  panel.appendChild(userPropNum('Time Between Rotations', 'time_between_rotations', 0, 0, 10, 0.1));
   panel.appendChild(timeBetweenAnimsRow);
   panel.appendChild(numPermRow);
-
-  // Apply initial conditional visibility (default mode is 'random')
   updateConditionals(currentMode);
 
-  // ── Layout ───────────────────────────────────────────────
+  // ── Layout ──
   panel.appendChild(section('Layout'));
-
-  panel.appendChild(row('Cube Spacing',
-    numInput(0, 0, 100, 1, v => applyUser({ cube_spacing: { value: v } }))
-  ));
-
-  panel.appendChild(row('Camera Depth',
-    numInput(150, 1, 300, 1, v => applyUser({ camera_depth: { value: v } }))
-  ));
+  panel.appendChild(userPropNum('Cube Spacing', 'cube_spacing', 0, 0, 100, 1));
+  panel.appendChild(userPropNum('Camera Depth', 'camera_depth', 150, 1, 300, 1));
 
   host.appendChild(toggle);
   host.appendChild(panel);
