@@ -1,4 +1,5 @@
 uniform vec3 palette[6];
+uniform float uCullMargin;
 
 attribute float aFaceId;
 attribute float aCubieType;
@@ -32,6 +33,12 @@ vec4 slerp(vec4 v0, vec4 v1, float t) {
 }
 
 void main() {
+  vec4 instanceClipPos = projectionMatrix * modelViewMatrix * vec4(aInstancePos, 1.0);
+  if (abs(instanceClipPos.x) > 1.0 + uCullMargin || abs(instanceClipPos.y) > 1.0 + uCullMargin) {
+    gl_Position = vec4(2.0, 2.0, 0.0, 1.0);
+    return;
+  }
+
   int faceIdx = int(aFaceId);
   vFaceIdx = aFaceId;
   int typeMask = int(aCubieType);

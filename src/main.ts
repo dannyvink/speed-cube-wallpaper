@@ -79,6 +79,7 @@ baseGeom.setAttribute('aFaceId', new THREE.BufferAttribute(faceIds, 1));
 
 const material = new THREE.ShaderMaterial({
   uniforms: {
+    uCullMargin: { value: 20.0 / CAMERA_DEPTH },
     palette: {
       value: [
         new THREE.Color(0xfcfcfc), // +X (White)
@@ -104,6 +105,10 @@ let aLocalPos: THREE.InstancedBufferAttribute;
 let aQuatA: THREE.InstancedBufferAttribute;
 let aQuatB: THREE.InstancedBufferAttribute;
 let aProgress: THREE.InstancedBufferAttribute;
+
+function updateCullMargin() {
+  material.uniforms.uCullMargin.value = 20.0 / CAMERA_DEPTH;
+}
 
 function initGrid() {
   if (mesh) {
@@ -385,6 +390,7 @@ function applyWallpaperColor(index: number, value: string) {
       camera.top = CAMERA_DEPTH;
       camera.bottom = -CAMERA_DEPTH;
       camera.updateProjectionMatrix();
+      updateCullMargin();
       needsReset = true;
     }
 
@@ -394,6 +400,7 @@ function applyWallpaperColor(index: number, value: string) {
 
 animate();
 
-if (import.meta.env.DEV) {
+declare const __DEV_MENU__: boolean;
+if (import.meta.env.DEV || __DEV_MENU__) {
   initDevMenu();
 }

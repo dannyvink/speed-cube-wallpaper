@@ -116,10 +116,10 @@ function checkboxInput(checked: boolean, onChange: (v: boolean) => void): HTMLIn
 
 function selectInput(options: { label: string; value: string }[], current: string, onChange: (v: string) => void): HTMLSelectElement {
   const sel = el('select', {}, {
-    background: 'rgba(255,255,255,0.08)',
+    background: '#1a1a2a',
     border: '1px solid rgba(255,255,255,0.15)',
     borderRadius: '4px',
-    color: 'inherit',
+    color: '#e0e0e0',
     padding: '2px 4px',
     fontSize: '11px',
     cursor: 'pointer',
@@ -128,6 +128,8 @@ function selectInput(options: { label: string; value: string }[], current: strin
     const o = document.createElement('option');
     o.value = opt.value;
     o.textContent = opt.label;
+    o.style.background = '#1a1a2a';
+    o.style.color = '#e0e0e0';
     if (opt.value === current) o.selected = true;
     sel.appendChild(o);
   }
@@ -149,7 +151,7 @@ export function initDevMenu() {
   });
 
   // Toggle button
-  const toggle = el('button', { textContent: '⚙ DEV' }, {
+  const toggle = el('button', { textContent: '⚙ SETTINGS' }, {
     display: 'block',
     marginLeft: 'auto',
     padding: '4px 10px',

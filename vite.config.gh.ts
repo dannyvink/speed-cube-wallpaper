@@ -4,8 +4,11 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 
 export default defineConfig({
   plugins: [glsl(), viteSingleFile()],
-  base: './',
+  base: '/',
   define: {
-    __DEV_MENU__: false,
+    __DEV_MENU__: true,
+  },
+  build: {
+    outDir: 'dist-gh',
   },
 });

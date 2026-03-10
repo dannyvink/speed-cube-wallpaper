@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "copy-to-project": "node scripts/copy-to-project.js"
+    "copy-to-project": "node scripts/copy-to-project.js",
+    "copy-from-project": "node scripts/copy-from-project.js",
+    "build:gh": "tsc && vite build --config vite.config.gh.ts"
   },
   "devDependencies": {
     "typescript": "~5.9.3",
