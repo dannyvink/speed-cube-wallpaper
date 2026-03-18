@@ -6,6 +6,7 @@ import { initDevMenu } from './devMenu';
 import { AnimationMode, ANIMATION_MODE_MAP, DEFAULT_CUBE_CONFIG } from './types';
 import type { CubeConfig } from './types';
 import { CUBIES_PER_CUBE, CUBIE_SIZE, CULL_MARGIN, WAVE_STAGGER } from './constants';
+import { setSeed } from './random';
 
 // ── Global animation config ────────────────────────────────────────
 let config: CubeConfig = { ...DEFAULT_CUBE_CONFIG };
@@ -394,6 +395,11 @@ function applyWallpaperColor(index: number, value: string) {
       cameraDepth = properties.camera_depth.value;
       updateCamera();
       updateCullMargin();
+      needsReset = true;
+    }
+
+    if (properties.seed !== undefined) {
+      setSeed(properties.seed.value as string);
       needsReset = true;
     }
 

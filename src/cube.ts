@@ -8,6 +8,7 @@ import {
   RANDOM_WAIT_MIN, RANDOM_WAIT_MAX, INITIAL_WAIT_JITTER,
   WAVE_BIDIR_STAGGER,
 } from './constants';
+import { random } from './random';
 
 /** Axis and filter for each face move */
 const FACE_DEFS: Record<Face, { axis: THREE.Vector3; dir: 'x' | 'y' | 'z'; val: number; flipAngle: boolean }> = {
@@ -24,7 +25,7 @@ export class Cube {
   moveQueue: Move[] = [];
   animating = false;
   progress = 0;
-  waitTimer = Math.random() * INITIAL_WAIT_JITTER;
+  waitTimer = random() * INITIAL_WAIT_JITTER;
   worldPos: THREE.Vector3;
   config: CubeConfig;
   waveMoveFactor = 0;
@@ -56,7 +57,7 @@ export class Cube {
     const axes = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
     const q = new THREE.Quaternion();
     for (const axis of axes) {
-      const turns = Math.floor(Math.random() * 4);
+      const turns = Math.floor(random() * 4);
       if (turns > 0) q.multiply(new THREE.Quaternion().setFromAxisAngle(axis, turns * Math.PI / 2));
     }
     for (const cubie of this.cubies) {
@@ -93,7 +94,7 @@ export class Cube {
       this.executeMove(this.moveQueue.shift()!);
       this.animating = true;
       this.moveOvershoot = this.config.naturalRotations
-        ? (Math.random() < 0.25 ? 2.5 + Math.random() * 2.5 : 0.3 + Math.random() * 0.7)
+        ? (random() < 0.25 ? 2.5 + random() * 2.5 : 0.3 + random() * 0.7)
         : 0;
     } else {
       this.waitTimer -= delta;
@@ -107,9 +108,9 @@ export class Cube {
     const mode = this.config.animationMode;
 
     if (mode === AnimationMode.Random) {
-      const count = RANDOM_SCRAMBLE_MIN + Math.floor(Math.random() * (RANDOM_SCRAMBLE_MAX - RANDOM_SCRAMBLE_MIN));
+      const count = RANDOM_SCRAMBLE_MIN + Math.floor(random() * (RANDOM_SCRAMBLE_MAX - RANDOM_SCRAMBLE_MIN));
       this.scramble(count);
-      this.waitTimer = RANDOM_WAIT_MIN + Math.random() * (RANDOM_WAIT_MAX - RANDOM_WAIT_MIN);
+      this.waitTimer = RANDOM_WAIT_MIN + random() * (RANDOM_WAIT_MAX - RANDOM_WAIT_MIN);
     } else if (mode === AnimationMode.NPermutations) {
       this.scramble(this.config.numPermutations);
       this.waitTimer = this.config.timeBetweenAnimations;
@@ -151,11 +152,11 @@ export class Cube {
     for (let i = 0; i < n; i++) {
       let face: Face;
       do {
-        face = ALL_FACES[Math.floor(Math.random() * ALL_FACES.length)];
+        face = ALL_FACES[Math.floor(random() * ALL_FACES.length)];
       } while (face === lastFace);
 
       lastFace = face;
-      sequence.push({ face, prime: Math.random() > 0.5 });
+      sequence.push({ face, prime: random() > 0.5 });
     }
 
     this.moveQueue.push(...sequence);
