@@ -6,7 +6,7 @@ import { initDevMenu } from './devMenu';
 import { AnimationMode, ANIMATION_MODE_MAP, DEFAULT_CUBE_CONFIG } from './types';
 import type { CubeConfig } from './types';
 import { CUBIES_PER_CUBE, CUBIE_SIZE, CULL_MARGIN, WAVE_STAGGER } from './constants';
-import { setSeed } from './random';
+import { setSeed, makeRng } from './random';
 
 // ── Global animation config ────────────────────────────────────────
 let config: CubeConfig = { ...DEFAULT_CUBE_CONFIG };
@@ -163,7 +163,7 @@ function initGrid() {
       const w = -(u + v);
 
       const worldPos = new THREE.Vector3(u, v, w).multiplyScalar(cubeSpacing);
-      cubes.push(new Cube(worldPos, config, randomStartingRotation));
+      cubes.push(new Cube(worldPos, config, randomStartingRotation, makeRng(cubes.length)));
     }
   }
 

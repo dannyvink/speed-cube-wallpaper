@@ -1,9 +1,12 @@
 /**
  * Seeded random number generator using the mulberry32 algorithm.
  * When no seed is set, falls back to Math.random().
+ *
+ * Each cube gets its own RNG instance via makeRng(index) so that
+ * per-cube behaviour is deterministic regardless of frame timing.
  */
 
-let rng: (() => number) | null = null;
+let currentSeed: string | null = null;
 
 function mulberry32(seed: number): () => number {
   return function () {
@@ -24,13 +27,11 @@ function hashString(str: string): number {
 }
 
 export function setSeed(seed: string) {
-  if (seed.trim() === '') {
-    rng = null;
-  } else {
-    rng = mulberry32(hashString(seed));
-  }
+  currentSeed = seed.trim() === '' ? null : seed;
 }
 
-export function random(): number {
-  return rng ? rng() : Math.random();
+/** Returns an independent RNG for the given cube index. */
+export function makeRng(index: number): () => number {
+  if (currentSeed === null) return Math.random;
+  return mulberry32(hashString(`${currentSeed}:${index}`));
 }
