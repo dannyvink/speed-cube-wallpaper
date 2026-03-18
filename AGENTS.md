@@ -45,6 +45,17 @@ npm run preview
 - `src/shaders/cubie.frag.glsl`: Fragment shader. Implements multi-source lighting, rim lighting, and anti-aliased sticker edge masking.
 - `project.json`: Wallpaper Engine project manifest. Defines all user-configurable properties.
 
+## Adding a New Property
+
+When adding a new user-configurable property, **all four** of the following steps are required:
+
+1. **`project.json`** — Add the property definition (type, default value, order index, display text).
+2. **`src/main.ts`** — Handle the property key in `applyUserProperties` inside `wallpaperPropertyListener`.
+3. **`src/devMenu.ts`** — Add a matching control to `initDevMenu()` so the property is accessible during development. Use the existing helpers (`userPropNum`, `userPropCheckbox`, `userPropColor`) or build a custom input and call `applyUser({ [prop]: { value } })` directly.
+4. **`AGENTS.md`** — Add a row to the Key Configurations table below.
+
+Omitting the dev menu step means the property cannot be tested without Wallpaper Engine.
+
 ## Key Configurations
 
 All of the following are exposed as Wallpaper Engine properties (see `project.json`) and handled in `wallpaperPropertyListener` in `main.ts`:
@@ -63,6 +74,7 @@ All of the following are exposed as Wallpaper Engine properties (see `project.js
 | `color_face_0..5` | color | Six sticker colors (White, Yellow, Green, Blue, Red, Orange) |
 | `color_background` | color | Scene background color |
 | `vignette` | slider (0–100) | Darkened border overlay intensity |
+| `seed` | textinput | Optional RNG seed; empty = fully random (see `src/random.ts`) |
 
 ## Animation Modes
 
