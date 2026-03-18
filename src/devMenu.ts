@@ -226,6 +226,15 @@ export function initDevMenu() {
   panel.appendChild(userPropNum('Cube Spacing', 'cube_spacing', 0, 0, 100, 1));
   panel.appendChild(userPropNum('Camera Depth', 'camera_depth', 150, 1, 300, 1));
 
+  const restartBtn = el('button', { textContent: 'Restart Animation' }, {
+    display: 'block', width: '100%', marginTop: '10px', padding: '5px 0',
+    fontSize: '11px', fontFamily: 'inherit',
+    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+    borderRadius: '4px', color: 'inherit', cursor: 'pointer',
+  });
+  restartBtn.addEventListener('click', () => (window as any).wallpaperPropertyListener.restartAnimation());
+  panel.appendChild(restartBtn);
+
   host.appendChild(toggle);
   host.appendChild(panel);
   document.body.appendChild(host);

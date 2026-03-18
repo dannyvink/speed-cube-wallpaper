@@ -404,7 +404,11 @@ function applyWallpaperColor(index: number, value: string) {
     }
 
     if (needsReset) initGrid();
-  }
+  },
+
+  restartAnimation() {
+    initGrid();
+  },
 };
 
 animate();
