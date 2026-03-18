@@ -214,6 +214,13 @@ export function initDevMenu() {
   panel.appendChild(numPermRow);
   updateConditionals(currentMode);
 
+  const seedInput = el('input', { placeholder: 'leave blank for random' }, {
+    ...INPUT_STYLE, width: '140px', padding: '2px 6px',
+  });
+  seedInput.type = 'text';
+  seedInput.addEventListener('change', () => applyUser({ seed: { value: seedInput.value } }));
+  panel.appendChild(row('Seed', seedInput));
+
   // ── Layout ──
   panel.appendChild(section('Layout'));
   panel.appendChild(userPropNum('Cube Spacing', 'cube_spacing', 0, 0, 100, 1));
