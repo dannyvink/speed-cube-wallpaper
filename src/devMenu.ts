@@ -206,7 +206,7 @@ export function initDevMenu() {
     updateConditionals(v);
   })));
 
-  panel.appendChild(userPropCheckbox('Natural Rotations', 'natural_rotations', false));
+  panel.appendChild(userPropCheckbox('Natural Rotations', 'natural_rotations', true));
   panel.appendChild(userPropCheckbox('Random Starting Orientation', 'random_starting_orientation', false));
   panel.appendChild(userPropNum('Rotation Speed', 'move_speed', 2.0, 0, 10, 0.1));
   panel.appendChild(userPropNum('Time Between Rotations', 'time_between_rotations', 0, 0, 10, 0.1));
