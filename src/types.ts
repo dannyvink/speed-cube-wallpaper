@@ -70,7 +70,7 @@ export const DEFAULT_CUBE_CONFIG: CubeConfig = {
   moveSpeed: 2.0,
   animationMode: AnimationMode.Random,
   numPermutations: 5,
-  naturalRotations: false,
+  naturalRotations: true,
   timeBetweenRotations: 0,
   timeBetweenAnimations: 3,
 };

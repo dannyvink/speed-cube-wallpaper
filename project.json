@@ -140,7 +140,7 @@
 				"order" : 110,
 				"text" : "Natural Rotations",
 				"type" : "bool",
-				"value" : false
+				"value" : true
 			},
 			"num_permutations" : 
 			{
