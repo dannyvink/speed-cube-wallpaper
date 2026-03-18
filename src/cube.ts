@@ -24,7 +24,7 @@ export class Cube {
   moveQueue: Move[] = [];
   animating = false;
   progress = 0;
-  waitTimer = Math.random() * INITIAL_WAIT_JITTER;
+  waitTimer: number;
   worldPos: THREE.Vector3;
   config: CubeConfig;
   waveMoveFactor = 0;
@@ -32,8 +32,11 @@ export class Cube {
   moveOvershoot = 0;
   movePauseTimer = 0;
   waveBidirFlipped = false;
+  private rng: () => number;
 
-  constructor(worldPos: THREE.Vector3, config: CubeConfig, randomStartingRotation: boolean = false) {
+  constructor(worldPos: THREE.Vector3, config: CubeConfig, randomStartingRotation: boolean = false, rng: () => number = Math.random) {
+    this.rng = rng;
+    this.waitTimer = this.rng() * INITIAL_WAIT_JITTER;
     this.worldPos = worldPos;
     this.config = { ...config };
     for (let x = -1; x <= 1; x++) {
@@ -56,7 +59,7 @@ export class Cube {
     const axes = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
     const q = new THREE.Quaternion();
     for (const axis of axes) {
-      const turns = Math.floor(Math.random() * 4);
+      const turns = Math.floor(this.rng() * 4);
       if (turns > 0) q.multiply(new THREE.Quaternion().setFromAxisAngle(axis, turns * Math.PI / 2));
     }
     for (const cubie of this.cubies) {
@@ -93,7 +96,7 @@ export class Cube {
       this.executeMove(this.moveQueue.shift()!);
       this.animating = true;
       this.moveOvershoot = this.config.naturalRotations
-        ? (Math.random() < 0.25 ? 2.5 + Math.random() * 2.5 : 0.3 + Math.random() * 0.7)
+        ? (this.rng() < 0.25 ? 2.5 + this.rng() * 2.5 : 0.3 + this.rng() * 0.7)
         : 0;
     } else {
       this.waitTimer -= delta;
@@ -107,9 +110,9 @@ export class Cube {
     const mode = this.config.animationMode;
 
     if (mode === AnimationMode.Random) {
-      const count = RANDOM_SCRAMBLE_MIN + Math.floor(Math.random() * (RANDOM_SCRAMBLE_MAX - RANDOM_SCRAMBLE_MIN));
+      const count = RANDOM_SCRAMBLE_MIN + Math.floor(this.rng() * (RANDOM_SCRAMBLE_MAX - RANDOM_SCRAMBLE_MIN));
       this.scramble(count);
-      this.waitTimer = RANDOM_WAIT_MIN + Math.random() * (RANDOM_WAIT_MAX - RANDOM_WAIT_MIN);
+      this.waitTimer = RANDOM_WAIT_MIN + this.rng() * (RANDOM_WAIT_MAX - RANDOM_WAIT_MIN);
     } else if (mode === AnimationMode.NPermutations) {
       this.scramble(this.config.numPermutations);
       this.waitTimer = this.config.timeBetweenAnimations;
@@ -151,11 +154,11 @@ export class Cube {
     for (let i = 0; i < n; i++) {
       let face: Face;
       do {
-        face = ALL_FACES[Math.floor(Math.random() * ALL_FACES.length)];
+        face = ALL_FACES[Math.floor(this.rng() * ALL_FACES.length)];
       } while (face === lastFace);
 
       lastFace = face;
-      sequence.push({ face, prime: Math.random() > 0.5 });
+      sequence.push({ face, prime: this.rng() > 0.5 });
     }
 
     this.moveQueue.push(...sequence);

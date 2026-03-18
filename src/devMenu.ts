@@ -3,7 +3,6 @@
 type UserProps = Record<string, { value: any }>;
 
 const FACE_LABELS = ['+X (White)', '-X (Yellow)', '+Y (Green)', '-Y (Blue)', '+Z (Red)', '-Z (Orange)'];
-const FACE_DEFAULTS = ['#fcfcfc', '#f6ec21', '#009e5b', '#0050a4', '#d72828', '#ff5800'];
 
 const ANIM_MODES = [
   { label: 'Random',          value: 'random' },
@@ -14,6 +13,70 @@ const ANIM_MODES = [
   { label: 'Ripple',          value: 'ripple' },
   { label: 'N Permutations',  value: 'n_permutations' },
 ];
+
+// ── Settings state ───────────────────────────────────────────────────
+
+type Settings = {
+  fps: number;
+  color_face_0: string; color_face_1: string; color_face_2: string;
+  color_face_3: string; color_face_4: string; color_face_5: string;
+  color_background: string;
+  vignette: number;
+  animation_mode: string;
+  natural_rotations: boolean;
+  random_starting_orientation: boolean;
+  move_speed: number;
+  time_between_rotations: number;
+  time_between_animations: number;
+  num_permutations: number;
+  cube_spacing: number;
+  camera_depth: number;
+  seed: string;
+};
+
+const DEFAULT_SETTINGS: Settings = {
+  fps: 60,
+  color_face_0: '#fcfcfc', color_face_1: '#f6ec21', color_face_2: '#009e5b',
+  color_face_3: '#0050a4', color_face_4: '#d72828', color_face_5: '#ff5800',
+  color_background: '#111111',
+  vignette: 0,
+  animation_mode: 'random',
+  natural_rotations: true,
+  random_starting_orientation: false,
+  move_speed: 2.0,
+  time_between_rotations: 0,
+  time_between_animations: 3,
+  num_permutations: 5,
+  cube_spacing: 0,
+  camera_depth: 150,
+  seed: '',
+};
+
+const settings: Settings = { ...DEFAULT_SETTINGS };
+
+function loadFromUrl(): boolean {
+  const param = new URLSearchParams(window.location.search).get('settings');
+  if (!param) return false;
+  try {
+    Object.assign(settings, JSON.parse(atob(param)));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function updateUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('settings', btoa(JSON.stringify(settings)));
+  window.history.replaceState(null, '', url.toString());
+}
+
+function set<K extends keyof Settings>(key: K, value: Settings[K]) {
+  settings[key] = value;
+  updateUrl();
+}
+
+// ── Apply helpers ────────────────────────────────────────────────────
 
 function hexToWEColor(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -30,7 +93,29 @@ function applyGeneral(props: Record<string, any>) {
   (window as any).wallpaperPropertyListener.applyGeneralProperties(props);
 }
 
-// ── DOM helpers ─────────────────────────────────────────────────────
+function applyAllSettings() {
+  applyGeneral({ fps: settings.fps });
+  const userProps: UserProps = {
+    color_background: { value: hexToWEColor(settings.color_background) },
+    vignette: { value: settings.vignette },
+    animation_mode: { value: settings.animation_mode },
+    natural_rotations: { value: settings.natural_rotations },
+    random_starting_orientation: { value: settings.random_starting_orientation },
+    move_speed: { value: settings.move_speed },
+    time_between_rotations: { value: settings.time_between_rotations },
+    time_between_animations: { value: settings.time_between_animations },
+    num_permutations: { value: settings.num_permutations },
+    cube_spacing: { value: settings.cube_spacing },
+    camera_depth: { value: settings.camera_depth },
+    seed: { value: settings.seed },
+  };
+  for (let i = 0; i < 6; i++) {
+    userProps[`color_face_${i}`] = { value: hexToWEColor(settings[`color_face_${i}` as keyof Settings] as string) };
+  }
+  applyUser(userProps);
+}
+
+// ── DOM helpers ──────────────────────────────────────────────────────
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -62,7 +147,7 @@ function section(title: string): HTMLElement {
   });
 }
 
-// ── Input builders ──────────────────────────────────────────────────
+// ── Input builders ───────────────────────────────────────────────────
 
 const INPUT_STYLE: Partial<CSSStyleDeclaration> = {
   background: 'rgba(255,255,255,0.08)',
@@ -132,23 +217,34 @@ function selectInput(options: { label: string; value: string }[], current: strin
   return sel;
 }
 
-// ── Convenience: create a row that applies a single user property ──
+// ── Convenience: create a row that applies a single user property ────
 
-function userPropNum(label: string, prop: string, value: number, min: number, max: number, step: number): HTMLElement {
-  return row(label, numInput(value, min, max, step, v => applyUser({ [prop]: { value: v } })));
+function userPropNum(label: string, prop: keyof Settings, min: number, max: number, step: number): HTMLElement {
+  return row(label, numInput(settings[prop] as number, min, max, step, v => {
+    set(prop, v as any);
+    applyUser({ [prop]: { value: v } });
+  }));
 }
 
-function userPropColor(label: string, prop: string, defaultHex: string): HTMLElement {
-  return row(label, colorInput(defaultHex, hex => applyUser({ [prop]: { value: hexToWEColor(hex) } })));
+function userPropColor(label: string, prop: keyof Settings): HTMLElement {
+  return row(label, colorInput(settings[prop] as string, hex => {
+    set(prop, hex as any);
+    applyUser({ [prop]: { value: hexToWEColor(hex) } });
+  }));
 }
 
-function userPropCheckbox(label: string, prop: string, checked: boolean): HTMLElement {
-  return row(label, checkboxInput(checked, v => applyUser({ [prop]: { value: v } })));
+function userPropCheckbox(label: string, prop: keyof Settings): HTMLElement {
+  return row(label, checkboxInput(settings[prop] as boolean, v => {
+    set(prop, v as any);
+    applyUser({ [prop]: { value: v } });
+  }));
 }
 
-// ── Init ────────────────────────────────────────────────────────────
+// ── Init ─────────────────────────────────────────────────────────────
 
 export function initDevMenu() {
+  const hadUrlSettings = loadFromUrl();
+
   const host = el('div', {}, {
     position: 'fixed', top: '12px', right: '12px', zIndex: '9999',
     fontFamily: 'ui-monospace, monospace', fontSize: '12px',
@@ -176,50 +272,73 @@ export function initDevMenu() {
 
   // ── General ──
   panel.appendChild(section('General'));
-  panel.appendChild(row('FPS limit', numInput(60, 1, 240, 1, v => applyGeneral({ fps: v }))));
+  panel.appendChild(row('FPS limit', numInput(settings.fps, 1, 240, 1, v => {
+    set('fps', v);
+    applyGeneral({ fps: v });
+  })));
 
   // ── Colors ──
   panel.appendChild(section('Face Colors'));
   for (let i = 0; i < 6; i++) {
-    panel.appendChild(userPropColor(FACE_LABELS[i], `color_face_${i}`, FACE_DEFAULTS[i]));
+    panel.appendChild(userPropColor(FACE_LABELS[i], `color_face_${i}` as keyof Settings));
   }
 
   panel.appendChild(section('Background'));
-  panel.appendChild(userPropColor('Color', 'color_background', '#111111'));
-  panel.appendChild(userPropNum('Vignette', 'vignette', 0, 0, 100, 1));
+  panel.appendChild(userPropColor('Color', 'color_background'));
+  panel.appendChild(userPropNum('Vignette', 'vignette', 0, 100, 1));
 
   // ── Animation ──
   panel.appendChild(section('Animation'));
 
-  let currentMode = 'random';
-  const timeBetweenAnimsRow = userPropNum('Time Between Anims', 'time_between_animations', 3, 0, 10, 0.1);
-  const numPermRow = userPropNum('N Permutations', 'num_permutations', 5, 1, 100, 1);
+  const timeBetweenAnimsRow = userPropNum('Time Between Anims', 'time_between_animations', 0, 10, 0.1);
+  const numPermRow = userPropNum('N Permutations', 'num_permutations', 1, 100, 1);
 
   function updateConditionals(mode: string) {
     timeBetweenAnimsRow.style.display = mode !== 'random' ? 'flex' : 'none';
     numPermRow.style.display = mode === 'n_permutations' ? 'flex' : 'none';
   }
 
-  panel.appendChild(row('Mode', selectInput(ANIM_MODES, currentMode, v => {
-    currentMode = v;
+  panel.appendChild(row('Mode', selectInput(ANIM_MODES, settings.animation_mode, v => {
+    set('animation_mode', v);
     applyUser({ animation_mode: { value: v } });
     updateConditionals(v);
   })));
 
-  panel.appendChild(userPropCheckbox('Natural Rotations', 'natural_rotations', true));
-  panel.appendChild(userPropCheckbox('Random Starting Orientation', 'random_starting_orientation', false));
-  panel.appendChild(userPropNum('Rotation Speed', 'move_speed', 2.0, 0, 10, 0.1));
-  panel.appendChild(userPropNum('Time Between Rotations', 'time_between_rotations', 0, 0, 10, 0.1));
+  panel.appendChild(userPropCheckbox('Natural Rotations', 'natural_rotations'));
+  panel.appendChild(userPropCheckbox('Random Starting Orientation', 'random_starting_orientation'));
+  panel.appendChild(userPropNum('Rotation Speed', 'move_speed', 0, 10, 0.1));
+  panel.appendChild(userPropNum('Time Between Rotations', 'time_between_rotations', 0, 10, 0.1));
   panel.appendChild(timeBetweenAnimsRow);
   panel.appendChild(numPermRow);
-  updateConditionals(currentMode);
+  updateConditionals(settings.animation_mode);
+
+  const seedInput = el('input', { placeholder: 'leave blank for random', value: settings.seed }, {
+    ...INPUT_STYLE, width: '140px', padding: '2px 6px',
+  });
+  seedInput.type = 'text';
+  seedInput.addEventListener('change', () => {
+    set('seed', seedInput.value);
+    applyUser({ seed: { value: seedInput.value } });
+  });
+  panel.appendChild(row('Seed', seedInput));
 
   // ── Layout ──
   panel.appendChild(section('Layout'));
-  panel.appendChild(userPropNum('Cube Spacing', 'cube_spacing', 0, 0, 100, 1));
-  panel.appendChild(userPropNum('Camera Depth', 'camera_depth', 150, 1, 300, 1));
+  panel.appendChild(userPropNum('Cube Spacing', 'cube_spacing', 0, 100, 1));
+  panel.appendChild(userPropNum('Camera Depth', 'camera_depth', 1, 300, 1));
+
+  const restartBtn = el('button', { textContent: 'Restart Animation' }, {
+    display: 'block', width: '100%', marginTop: '10px', padding: '5px 0',
+    fontSize: '11px', fontFamily: 'inherit',
+    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+    borderRadius: '4px', color: 'inherit', cursor: 'pointer',
+  });
+  restartBtn.addEventListener('click', () => (window as any).wallpaperPropertyListener.restartAnimation());
+  panel.appendChild(restartBtn);
 
   host.appendChild(toggle);
   host.appendChild(panel);
   document.body.appendChild(host);
+
+  if (hadUrlSettings) applyAllSettings();
 }
