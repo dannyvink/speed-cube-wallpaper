@@ -1,4 +1,5 @@
 {
+	"workshopid" : "3683910103",
 	"file": "index.html",
 	"general": {
 		"properties": {
@@ -154,7 +155,7 @@
 			"seed": {
 				"index": 17,
 				"order": 117,
-				"text": "Seed",
+				"text": "Seed (empty for random)",
 				"type": "textinput",
 				"value": ""
 			},
